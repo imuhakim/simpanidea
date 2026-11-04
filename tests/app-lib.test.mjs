@@ -1,0 +1,85 @@
+// Jalankan: node --test tests/
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { parseVideo } from '../docs/lib/video.js';
+import { createVault, decrypt, encrypt, unlockVault } from '../docs/lib/vault.js';
+
+test('YouTube dikenali dari semua bentuk link biasa', () => {
+  const cases = [
+    ['https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=30s', 'dQw4w9WgXcQ', false],
+    ['https://m.youtube.com/watch?v=dQw4w9WgXcQ', 'dQw4w9WgXcQ', false],
+    ['https://youtu.be/dQw4w9WgXcQ?si=abc', 'dQw4w9WgXcQ', false],
+    ['https://www.youtube.com/shorts/dQw4w9WgXcQ', 'dQw4w9WgXcQ', true],
+    ['https://www.youtube.com/live/dQw4w9WgXcQ', 'dQw4w9WgXcQ', false]
+  ];
+  for (const [url, id, vertical] of cases) {
+    const video = parseVideo(url);
+    assert.equal(video.platform, 'youtube', url);
+    assert.equal(video.vertical, vertical, url);
+    assert.ok(video.embedUrl.startsWith('https://www.youtube-nocookie.com/embed/' + id + '?'), url);
+    assert.equal(video.thumbnail, 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg');
+  }
+});
+
+test('TikTok penuh terus boleh dimainkan, link pendek perlu diselesaikan dulu', () => {
+  const full = parseVideo('https://www.tiktok.com/@kedai/video/7300000000000000000?is_from_webapp=1');
+  assert.equal(full.embedUrl, 'https://www.tiktok.com/embed/v2/7300000000000000000');
+  assert.equal(full.vertical, true);
+  for (const short of ['https://vt.tiktok.com/ZSabc/', 'https://vm.tiktok.com/ZSabc/', 'https://www.tiktok.com/t/ZSabc/']) {
+    const video = parseVideo(short);
+    assert.equal(video.platform, 'tiktok');
+    assert.equal(video.needsResolve, true, short);
+    assert.equal(video.embedUrl, undefined);
+  }
+  assert.equal(parseVideo('https://www.tiktok.com/@kedai'), null);
+});
+
+test('Facebook dikenali dan alamatnya dikodkan', () => {
+  const watch = parseVideo('https://www.facebook.com/watch/?v=123&a=b');
+  assert.equal(watch.platform, 'facebook');
+  assert.ok(watch.embedUrl.includes(encodeURIComponent('https://www.facebook.com/watch/?v=123&a=b')));
+  assert.equal(parseVideo('https://www.facebook.com/kedai/videos/123/').vertical, false);
+  assert.equal(parseVideo('https://www.facebook.com/reel/123').vertical, true);
+  assert.equal(parseVideo('https://fb.watch/abc/').needsResolve, true);
+  const share = parseVideo('https://www.facebook.com/share/r/abc/');
+  assert.equal(share.needsResolve, true);
+  assert.ok(share.fallback.embedUrl.startsWith('https://www.facebook.com/plugins/video.php'));
+  assert.equal(parseVideo('https://www.facebook.com/kedai/posts/1'), null);
+});
+
+test('link lain atau menyamar bukan video', () => {
+  for (const url of [
+    'https://contoh.my/watch?v=dQw4w9WgXcQ',
+    'https://youtube.com.jahat.com/watch?v=dQw4w9WgXcQ',
+    'https://jahat.com/?u=https://youtu.be/dQw4w9WgXcQ',
+    'javascript:alert(1)',
+    'bukan link',
+    '',
+    'https://www.youtube.com/watch?v=%22%3E%3Cscript%3E',
+    'https://www.youtube.com/channel/UC123'
+  ]) {
+    assert.equal(parseVideo(url), null, url);
+  }
+});
+
+test('peti password: kata laluan betul membuka, salah ditolak', async () => {
+  const { key, record } = await createVault('kata laluan panjang');
+  const sealed = await encrypt(key, 'Rahsia@123 ñ');
+  assert.ok(!sealed.includes('Rahsia'));
+  assert.ok(!JSON.stringify(record).includes('kata laluan'));
+  assert.equal(await decrypt(key, sealed), 'Rahsia@123 ñ');
+
+  const again = await unlockVault('kata laluan panjang', record);
+  assert.equal(await decrypt(again, sealed), 'Rahsia@123 ñ');
+  assert.equal(await unlockVault('salah', record), null);
+  assert.notEqual(await encrypt(key, 'sama'), await encrypt(key, 'sama'));
+});
+
+test('data password yang diubah atau rosak gagal, bukan memberi teks salah', async () => {
+  const { key } = await createVault('abc');
+  const sealed = await encrypt(key, 'rahsia');
+  const parts = sealed.split('.');
+  const flipped = (parts[2][0] === 'A' ? 'B' : 'A') + parts[2].slice(1);
+  await assert.rejects(decrypt(key, parts[0] + '.' + parts[1] + '.' + flipped));
+  await assert.rejects(decrypt(key, 'rosak'));
+});

@@ -5,7 +5,10 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 function createHarness() {
-  const state = { properties: {}, files: [], folders: [], rows: [], logs: [], locks: 0, ids: 0 };
+  const state = {
+    properties: {}, files: [], folders: [], sheets: {}, logs: [], locks: 0, ids: 0,
+    redirects: {}, fetched: []
+  };
   const nextId = (prefix) => `${prefix}-${++state.ids}`;
 
   function makeFolder(name, parent) {
@@ -20,10 +23,6 @@ function createHarness() {
       },
       createFolder: (childName) => makeFolder(childName, folder),
       createFile(blob) {
-        if (state.failNextFile) {
-          state.failNextFile = false;
-          throw new Error('Drive penuh');
-        }
         const file = {
           id: nextId('file'),
           blob,
@@ -45,46 +44,67 @@ function createHarness() {
 
   const root = makeFolder('My Drive', null);
 
-  const sheet = {
-    name: 'Sheet1',
-    setName(name) { sheet.name = name; },
-    setFrozenRows() {},
-    getLastRow: () => state.rows.length,
-    appendRow(row) {
-      if (state.failNextAppend) {
-        state.failNextAppend = false;
-        throw new Error('Sheet sibuk');
-      }
-      state.rows.push(row.slice());
-    },
-    getRange(row, column, rows, columns) {
-      return {
-        setValues(values) {
-          values.forEach((value, i) => { state.rows[row - 1 + i] = value.slice(); });
-        },
-        getValue: () => state.rows[row - 1][column - 1],
-        getValues: () => state.rows.slice(row - 1, row - 1 + rows).map((r) => r.slice(column - 1, column - 1 + columns)),
-        setValue: (value) => { state.rows[row - 1][column - 1] = value; },
-        createTextFinder(text) {
-          const finder = {
-            matchEntireCell: () => finder,
-            findNext() {
-              for (let r = row; r < row + (rows || 1); r++) {
-                if (String(state.rows[r - 1][column - 1]) === text) return { getRow: () => r };
-              }
-              return null;
-            }
-          };
-          return finder;
+  function makeSheet(name) {
+    const sheet = {
+      name,
+      rows: [],
+      setName(newName) {
+        delete state.sheets[sheet.name];
+        sheet.name = newName;
+        state.sheets[newName] = sheet;
+      },
+      setFrozenRows() {},
+      getLastRow: () => sheet.rows.length,
+      getLastColumn: () => (sheet.rows[0] ? sheet.rows[0].length : 0),
+      getMaxRows: () => 1000,
+      deleteRow: (row) => { sheet.rows.splice(row - 1, 1); },
+      appendRow(row) {
+        if (state.failNextAppend) {
+          state.failNextAppend = false;
+          throw new Error('Sheet sibuk');
         }
-      };
-    }
-  };
+        sheet.rows.push(row.slice());
+      },
+      getRange(row, column, rows, columns) {
+        return {
+          setNumberFormat() {},
+          setValues(values) {
+            values.forEach((value, i) => {
+              const target = sheet.rows[row - 1 + i] || (sheet.rows[row - 1 + i] = []);
+              value.forEach((cell, j) => { target[column - 1 + j] = cell; });
+            });
+          },
+          getValue: () => sheet.rows[row - 1][column - 1],
+          getValues: () => sheet.rows.slice(row - 1, row - 1 + rows).map((r) => {
+            const out = [];
+            for (let c = 0; c < columns; c++) out.push(r[column - 1 + c] === undefined ? '' : r[column - 1 + c]);
+            return out;
+          }),
+          setValue: (value) => { sheet.rows[row - 1][column - 1] = value; },
+          createTextFinder(text) {
+            const finder = {
+              matchEntireCell: () => finder,
+              findNext() {
+                for (let r = row; r < row + (rows || 1); r++) {
+                  if (String(sheet.rows[r - 1][column - 1]) === text) return { getRow: () => r };
+                }
+                return null;
+              }
+            };
+            return finder;
+          }
+        };
+      }
+    };
+    state.sheets[name] = sheet;
+    return sheet;
+  }
 
   const spreadsheet = {
     getId: () => 'spreadsheet-1',
-    getSheets: () => [sheet],
-    getSheetByName: (name) => (sheet.name === name ? sheet : null)
+    getSheets: () => Object.values(state.sheets),
+    getSheetByName: (name) => state.sheets[name] || null,
+    insertSheet: (name) => makeSheet(name)
   };
 
   const context = vm.createContext({
@@ -102,6 +122,7 @@ function createHarness() {
         const file = state.files.find((f) => f.id === id);
         return {
           moveTo() {},
+          setTrashed: (value) => { file.trashed = value; },
           getBlob: () => ({
             getContentType: () => file.blob.mimeType,
             getBytes: () => file.blob.bytes
@@ -109,12 +130,28 @@ function createHarness() {
         };
       }
     },
-    SpreadsheetApp: { create: () => spreadsheet, openById: () => spreadsheet },
+    SpreadsheetApp: {
+      create() {
+        makeSheet('Sheet1');
+        return spreadsheet;
+      },
+      openById: () => spreadsheet
+    },
     LockService: {
       getScriptLock: () => ({
         waitLock: () => { state.locks += 1; },
         releaseLock: () => { state.locks -= 1; }
       })
+    },
+    UrlFetchApp: {
+      fetch(url) {
+        state.fetched.push(url);
+        const location = state.redirects[url];
+        return {
+          getResponseCode: () => (location ? 302 : 200),
+          getHeaders: () => (location ? { Location: location } : {})
+        };
+      }
     },
     Utilities: {
       getUuid: () => require('node:crypto').randomUUID(),

@@ -1,8 +1,11 @@
 importScripts('store.js');
 
-const CACHE_NAME = 'simpanidea-v3';
+const CACHE_NAME = 'simpanidea-v4';
 const APP_FILES = [
   './', 'index.html', 'app.js', 'store.js', 'style.css',
+  'lib/data.js', 'lib/dom.js', 'lib/images.js', 'lib/vault.js', 'lib/video.js',
+  'views/board.js', 'views/classes.js', 'views/compose.js', 'views/library.js',
+  'views/search.js', 'views/settings.js', 'views/tasks.js', 'views/watch.js',
   'manifest.webmanifest', 'icon-192.png', 'icon-512.png'
 ];
 const scopeUrl = (path) => new URL(path, self.registration.scope);
@@ -69,7 +72,7 @@ function itemsFromForm(form) {
   const sharedUrl = String(form.get('url') || '').trim();
   const url = sharedUrl || firstUrlIn(text);
   const createdAt = new Date().toISOString();
-  const base = { createdAt, status: 'pending', error: '' };
+  const base = { createdAt, status: 'pending', error: '', ruang: '', gambar: '' };
 
   const images = form.getAll('file')
     .filter((file) => file instanceof File && file.size > 0 && file.type.startsWith('image/'));

@@ -52,7 +52,9 @@ const server = http.createServer(async (request, response) => {
   if (url.pathname === '/mock-state') {
     sendJson(response, {
       secret: harness.state.properties.APP_SECRET,
-      rows: harness.state.rows,
+      sheets: Object.fromEntries(
+        Object.entries(harness.state.sheets).map(([name, sheet]) => [name, sheet.rows])
+      ),
       files: harness.state.files.map((file) => ({
         name: file.blob.name,
         mimeType: file.blob.mimeType,

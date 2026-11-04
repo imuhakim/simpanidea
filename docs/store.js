@@ -1,10 +1,10 @@
 // Storan peranti dalam IndexedDB, dikongsi antara halaman dan service worker.
-// queue: item yang belum sampai ke Google. items: salinan Sheet. images: gambar yang dah dimuat.
+// queue: perubahan yang belum sampai ke Google. tables: salinan Sheet. images: gambar yang dah dimuat.
 const SimpanStore = (() => {
   const DB_NAME = 'simpanidea';
-  const DB_VERSION = 2;
+  const DB_VERSION = 3;
   const QUEUE = 'queue';
-  const ITEMS = 'items';
+  const TABLES = 'tables';
   const IMAGES = 'images';
 
   function open() {
@@ -13,9 +13,11 @@ const SimpanStore = (() => {
       request.onupgradeneeded = () => {
         const db = request.result;
         if (!db.objectStoreNames.contains(QUEUE)) db.createObjectStore(QUEUE, { keyPath: 'id' });
-        if (!db.objectStoreNames.contains(ITEMS)) db.createObjectStore(ITEMS, { keyPath: 'id' });
+        if (!db.objectStoreNames.contains(TABLES)) db.createObjectStore(TABLES);
         if (!db.objectStoreNames.contains(IMAGES)) db.createObjectStore(IMAGES);
-        if (db.objectStoreNames.contains('sent')) db.deleteObjectStore('sent');
+        for (const old of ['sent', 'items']) {
+          if (db.objectStoreNames.contains(old)) db.deleteObjectStore(old);
+        }
       };
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
@@ -38,19 +40,17 @@ const SimpanStore = (() => {
   }
 
   return {
-    enqueue: (item) => run(QUEUE, 'readwrite', (store) => store.put(item)),
+    enqueue: (entry) => run(QUEUE, 'readwrite', (store) => store.put(entry)),
+    getQueued: (id) => run(QUEUE, 'readonly', (store) => store.get(id)),
     removeQueued: (id) => run(QUEUE, 'readwrite', (store) => store.delete(id)),
     async listQueued() {
-      const items = await run(QUEUE, 'readonly', (store) => store.getAll());
-      return items.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+      const entries = await run(QUEUE, 'readonly', (store) => store.getAll());
+      return entries.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
     },
-    listItems: () => run(ITEMS, 'readonly', (store) => store.getAll()),
-    putItem: (item) => run(ITEMS, 'readwrite', (store) => store.put(item)),
-    replaceItems: (items) => run(ITEMS, 'readwrite', (store) => {
-      store.clear();
-      items.forEach((item) => store.put(item));
-    }),
+    getTables: () => run(TABLES, 'readonly', (store) => store.get('all')),
+    putTables: (tables) => run(TABLES, 'readwrite', (store) => store.put(tables, 'all')),
     getImage: (id) => run(IMAGES, 'readonly', (store) => store.get(id)),
-    putImage: (id, blob) => run(IMAGES, 'readwrite', (store) => store.put(blob, id))
+    putImage: (id, blob) => run(IMAGES, 'readwrite', (store) => store.put(blob, id)),
+    removeImage: (id) => run(IMAGES, 'readwrite', (store) => store.delete(id))
   };
 })();

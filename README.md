@@ -1,6 +1,15 @@
-# SimpanIdea: Fasa 0, ujian butang Share
+# SimpanIdea
 
-Tujuan fasa ni satu sahaja: buktikan screenshot dari phone Android boleh sampai ke Google Drive dan Google Sheets kau melalui butang Share.
+App peribadi untuk simpan screenshot, link, nota, tugasan, kad kanban, kelas online dan video dalam satu tempat. Data kau kekal dalam Google Drive dan Google Sheets kau sendiri.
+
+| Bahagian | Kegunaan |
+|---|---|
+| **Inbox, Semua, Screenshot, Link, Nota** | Semua yang disimpan dari phone dan komputer |
+| **Info Penting** | Gambar yang kau perlu rujuk semula, seperti resit dan tiket |
+| **Tugasan** | Senarai tugasan dikumpul ikut tarikh |
+| **Papan** | Kanban dengan lajur yang boleh ditambah dan kad yang boleh diseret |
+| **Kelas** | Link, akaun, password disulitkan, dan rekod dah buka atau belum |
+| **Tonton** | Video YouTube, TikTok dan Facebook dimainkan terus dalam app |
 
 ## Isi projek
 
@@ -9,9 +18,11 @@ Tujuan fasa ni satu sahaja: buktikan screenshot dari phone Android boleh sampai 
 | `docs/` | App yang dipasang kat phone, dihoskan di GitHub Pages |
 | `apps-script/` | Backend yang simpan data ke Drive dan Sheets |
 | `tools/` | Pelayan ujian tempatan dan penjana ikon |
-| `tests/` | Ujian backend |
+| `tests/` | Ujian backend, video dan penyulitan |
 
-## Langkah 1: Sediakan backend Google
+## Setup kali pertama
+
+### Langkah 1: Backend Google
 
 1. Buka <https://script.google.com> dan tekan **New project**. Namakan `SimpanIdea`.
 2. Padam kod contoh, kemudian tampal isi [apps-script/Code.gs](apps-script/Code.gs) ke dalam `Code.gs`.
@@ -25,38 +36,53 @@ Tujuan fasa ni satu sahaja: buktikan screenshot dari phone Android boleh sampai 
    - **Who has access:** Anyone
 8. Tekan **Deploy** dan salin **Web app URL** yang berakhir dengan `/exec`.
 
-Sekarang Drive kau ada folder `SimpanIdea` dengan fail `SimpanIdea Data`.
-
 "Anyone" diperlukan supaya app boleh sampai ke backend. Tanpa kunci rahsia, tiada apa boleh dibaca atau disimpan.
 
-## Langkah 2: Letak app di GitHub Pages
+### Langkah 2: Pasang kat Android
 
-1. Cipta repositori awam di GitHub, contohnya `simpanidea`, dan muat naik projek ni.
-2. Pergi ke **Settings → Pages**.
-3. Di **Source** pilih **Deploy from a branch**, kemudian branch `main` dan folder `/docs`. Tekan **Save**.
-4. Tunggu seminit dua. Alamat app ialah `https://NAMA-KAU.github.io/simpanidea/`.
-
-Kod boleh jadi awam sebab kunci rahsia dan data kau tak ada di dalamnya.
-
-## Langkah 3: Pasang kat Android
-
-1. Buka alamat app dalam **Chrome** kat phone.
-2. Buka menu (☰) dan pilih **Tetapan**. Tampal URL Web App dan kunci rahsia, kemudian tekan **Simpan dan uji**.
-3. Pastikan **Sambungan ke Google: berjaya** ada di bahagian Semakan.
-4. Tekan **Pasang app** di Tetapan. Kalau butang tu tak keluar, buka menu Chrome (⋮) dan pilih **Add to Home screen** atau **Install app**, kemudian pilih **Install** kalau ditanya.
+1. Buka <https://imuhakim.github.io/simpanidea/> dalam **Chrome** kat phone.
+2. Tekan ikon menu (☰), dan pilih **Tetapan**. Tampal URL Web App dan kunci rahsia, kemudian tekan **Simpan dan uji**.
+3. Pastikan **Sambungan ke Google berjaya** ada di bahagian Semakan.
+4. Tekan **Pasang app** di Tetapan. Kalau butang tu tak keluar, buka menu Chrome (⋮) dan pilih **Add to Home screen** atau **Install app**.
 5. Buka SimpanIdea dari home screen sekali, dan isi tetapan semula kalau kosong.
 
-## Langkah 4: Ujian sebenar
+## Kemas kini backend
+
+Bila `Code.gs` atau `appsscript.json` berubah, app mungkin papar amaran "Backend Google masih versi lama".
+
+1. Tampal isi baru [apps-script/Code.gs](apps-script/Code.gs) dan [apps-script/appsscript.json](apps-script/appsscript.json) dalam Apps Script, dan simpan.
+2. Pilih fungsi `setup` dan tekan **Run**. Kalau Google minta kebenaran baru, benarkan. Data dan kunci sedia ada tak berubah.
+3. Tekan **Deploy → Manage deployments**, kemudian ikon pensil (**Edit**).
+4. Di **Version**, pilih **New version**, dan tekan **Deploy**.
+
+Cara ni mengekalkan URL yang sama, jadi tetapan app tak perlu diubah. Jangan pilih **New deployment**, sebab URL akan bertukar.
+
+## Senarai ujian kat phone
 
 | # | Cuba | Hasil yang patut keluar |
 |---|---|---|
-| 1 | Ambil screenshot, tekan **Share → SimpanIdea** | Gambar masuk `SimpanIdea/Screenshot/<bulan>` dan ada satu baris baru dalam Sheet |
+| 1 | Ambil screenshot, tekan **Share → SimpanIdea** | Masuk Inbox, folder `SimpanIdea/Screenshot/<bulan>`, dan tab `Item` |
 | 2 | Dari Gallery, pilih 3 gambar dan Share | 3 fail dan 3 baris |
-| 3 | Dari Chrome, Share satu link | Baris jenis `link` dengan URL betul |
-| 4 | Dari YouTube atau TikTok, Share satu video | Baris jenis `link` dengan URL betul |
-| 5 | Hidupkan Airplane mode, Share screenshot, kemudian matikan semula | Item menunggu dalam barisan, dan masuk Drive selepas app dibuka semula |
+| 3 | Share satu link dari Chrome | Masuk Inbox dan tab Link |
+| 4 | Share video dari YouTube, TikTok dan Facebook | Keluar dalam Tonton dan boleh dimainkan |
+| 5 | Di Papan, tekan lama pada kad dan seret ke lajur lain | Kad pindah, dan kekal selepas tekan segerak |
+| 6 | Di Info Penting, tekan **Ambil gambar** | Kamera terbuka, dan gambar tersimpan di situ |
+| 7 | Hidupkan Airplane mode, tambah tugasan, kemudian matikan | Tugasan menunggu, dan masuk Sheet bila internet kembali |
 
 SimpanIdea mungkin ambil beberapa minit untuk muncul dalam senarai Share selepas dipasang. Kalau masih tiada, mulakan semula phone.
+
+## Password kelas
+
+- Kali pertama kau simpan password, app minta kau cipta **kata laluan induk**.
+- Password disulitkan dalam peranti sebelum dihantar, jadi Sheet cuma simpan teks yang tak boleh dibaca.
+- Kata laluan induk tak disimpan di mana-mana. **Kalau lupa, password yang tersimpan tak boleh dipulihkan.**
+- App mengunci semula selepas 15 minit, atau bila kau tekan **Kunci password**.
+- Status kelas dan tarikh terakhir dibuka hanya direkod kalau kau buka kelas melalui butang **Buka** dalam app.
+
+## Had Tonton
+
+- Pemilik video boleh menghalang tontonan di luar app asal, dan video peribadi takkan dapat dimainkan. Butang **Buka di ...** sentiasa ada sebagai pilihan.
+- Link pendek TikTok dan Facebook dibuka melalui backend untuk dapatkan alamat sebenar. Kalau gagal, gunakan butang tadi.
 
 ## Kalau ada masalah
 
@@ -64,25 +90,16 @@ SimpanIdea mungkin ambil beberapa minit untuk muncul dalam senarai Share selepas
 |---|---|---|
 | `Failed to fetch` atau "Belum sampai" berterusan | Web App bukan "Anyone" | Semak tetapan deployment |
 | "Kunci rahsia salah" | Tersalah salin kunci | Jalankan `setup` semula untuk tengok kunci dalam log |
+| "Backend Google masih versi lama" | Kod baru belum di-deploy | Ikut **Kemas kini backend** di atas |
+| Link pendek tak dapat dimainkan | Kebenaran baru belum diberi | Tampal `appsscript.json` baru, jalankan `setup`, dan benarkan |
 | SimpanIdea tiada dalam senarai Share | App cuma jadi pintasan, bukan dipasang | Buang dari home screen dan pasang semula guna Chrome |
-| Kod Apps Script diubah tapi tak berkesan | Deployment lama masih digunakan | **Deploy → Manage deployments → Edit → New version** |
 
-Kalau kunci terdedah, jalankan fungsi `rotateSecret` dan masukkan kunci baru dalam app.
-
-## Kemas kini backend
-
-Bila `Code.gs` berubah, app akan papar amaran "Backend Google masih versi lama".
-
-1. Tampal isi baru [apps-script/Code.gs](apps-script/Code.gs) dalam Apps Script dan simpan.
-2. Tekan **Deploy → Manage deployments**, kemudian ikon pensil (**Edit**).
-3. Di **Version**, pilih **New version**, dan tekan **Deploy**.
-
-Cara ni mengekalkan URL dan kunci rahsia yang sama, jadi tetapan app tak perlu diubah. Jangan pilih **New deployment**, sebab URL akan bertukar.
+Kalau kunci rahsia terdedah, jalankan fungsi `rotateSecret` dan masukkan kunci baru dalam app.
 
 ## Ujian di komputer
 
 ```bash
-node --test tests/backend.test.js
+node --test tests/backend.test.js tests/app-lib.test.mjs
 ```
 
 ```bash
@@ -91,4 +108,4 @@ node tools/dev-server.js
 
 Pelayan ujian menjalankan `Code.gs` dengan tiruan Google di <http://localhost:5173>, jadi tiada data sebenar disentuh. Kunci tiruan ada di `/mock-state`, dan URL backendnya ialah `http://localhost:5173/mock-exec`.
 
-Butang Share sebenar, sambungan ke Google dan storan Drive hanya boleh disahkan melalui Langkah 4.
+Butang Share sebenar, sentuhan kat skrin phone, kamera, Google sebenar serta video TikTok dan Facebook hanya boleh disahkan kat phone kau.
