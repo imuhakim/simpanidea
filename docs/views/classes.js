@@ -18,7 +18,7 @@ function touchVault() {
   lockTimer = setTimeout(lockVault, AUTO_LOCK_MS);
 }
 
-function lockVault() {
+export function lockVault() {
   vaultKey = null;
   clearTimeout(lockTimer);
 }

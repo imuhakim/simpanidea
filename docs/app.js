@@ -8,6 +8,8 @@ import { renderBoard } from './views/board.js';
 import { renderClasses } from './views/classes.js';
 import { renderWatch, updateWatch } from './views/watch.js';
 import { setInstallPrompt, renderSettings, updateSettings } from './views/settings.js';
+import { isLocked, isPinEnabled, lockNow, setLockHandlers, setupAutoLock } from './views/lock.js';
+import { lockVault } from './views/classes.js';
 
 const VIEWS = {
   ...LIBRARY_VIEWS,
@@ -78,6 +80,7 @@ function renderChrome() {
   $('view-title').textContent = state.query.trim() ? 'Carian' : VIEWS[state.view].title;
   $('sync-status').replaceChildren(syncStatus());
   $('refresh').classList.toggle('spinning', state.refreshing || state.sending);
+  $('lock-now').hidden = !isPinEnabled();
 
   const banner = $('banner');
   banner.hidden = !state.needsBackendUpdate;
@@ -145,7 +148,7 @@ function route() {
   const key = location.hash.slice(1);
   state.view = VIEWS[key] ? key : 'inbox';
   closeMenu();
-  document.querySelectorAll('dialog[open]').forEach((dialog) => dialog.close());
+  document.querySelectorAll('dialog[open]:not(.lock)').forEach((dialog) => dialog.close());
   renderChrome();
   renderDeferred = false;
   $('main').replaceChildren();
@@ -246,12 +249,19 @@ function setupCapture() {
     if (!hasFiles(event)) return;
     event.preventDefault();
     $('drop-overlay').hidden = true;
+    if (isLocked()) return;
     if (!await addImageFiles(event.dataTransfer.files)) toast('Hanya gambar boleh diseret masuk', true);
   });
 }
 
 async function start() {
   setRenderer(renderAll);
+  // Kunci dulu sebelum apa-apa data dilukis. Barisan hantar tetap berjalan di belakang skrin kunci,
+  // supaya screenshot yang dikongsi terus sampai ke Google tanpa perlu memasukkan PIN.
+  setLockHandlers({ onLock: lockVault, onChange: renderChrome });
+  lockNow();
+  setupAutoLock();
+  $('lock-now').addEventListener('click', lockNow);
   handleShareResult();
   setupInstall();
   setupCapture();

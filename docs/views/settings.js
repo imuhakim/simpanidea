@@ -1,6 +1,7 @@
 // Tetapan: sambungan Google, pemasangan app dan perubahan yang gagal dihantar.
 import { isAllowedBackend, loadQueue, loadSettings, processQueue, refresh, render, saveSettings, state } from '../lib/data.js';
 import { field, h, toast } from '../lib/dom.js';
+import { renderLockSettings } from './lock.js';
 
 let installPrompt = null;
 export const setInstallPrompt = (event) => { installPrompt = event; };
@@ -89,6 +90,7 @@ export function renderSettings() {
 
   const page = h('div', { class: 'settings' },
     h('section', {}, h('h2', {}, 'Sambungan Google'), form),
+    renderLockSettings(),
     h('section', { id: 'failed-box', hidden: true },
       h('h2', {}, 'Gagal dihantar'),
       h('div', { class: 'rows' }),

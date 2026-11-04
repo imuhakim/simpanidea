@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { parseVideo } from '../docs/lib/video.js';
 import { createVault, decrypt, encrypt, unlockVault } from '../docs/lib/vault.js';
+import { createPinRecord, isValidPin, isWeakPin, lockoutSeconds, verifyPin } from '../docs/lib/pin.js';
 
 test('YouTube dikenali dari semua bentuk link biasa', () => {
   const cases = [
@@ -82,4 +83,25 @@ test('data password yang diubah atau rosak gagal, bukan memberi teks salah', asy
   const flipped = (parts[2][0] === 'A' ? 'B' : 'A') + parts[2].slice(1);
   await assert.rejects(decrypt(key, parts[0] + '.' + parts[1] + '.' + flipped));
   await assert.rejects(decrypt(key, 'rosak'));
+});
+
+test('PIN: hanya hash disimpan, dan PIN salah ditolak', async () => {
+  const record = await createPinRecord('482913');
+  assert.ok(!JSON.stringify(record).includes('482913'));
+  assert.equal(await verifyPin('482913', record), true);
+  assert.equal(await verifyPin('482914', record), false);
+  const other = await createPinRecord('482913');
+  assert.notEqual(other.hash, record.hash);
+});
+
+test('PIN: format dan PIN lemah dikenali', () => {
+  for (const pin of ['482913', '000000']) assert.equal(isValidPin(pin), true, pin);
+  for (const pin of ['48291', '4829130', 'abcdef', '', '48 913']) assert.equal(isValidPin(pin), false, pin);
+  for (const pin of ['111111', '123456', '654321', '456789']) assert.equal(isWeakPin(pin), true, pin);
+  for (const pin of ['482913', '112233', '121212']) assert.equal(isWeakPin(pin), false, pin);
+});
+
+test('PIN: cubaan salah dilambatkan selepas 5 kali, dengan had', () => {
+  assert.deepEqual([0, 4, 5, 6, 7].map(lockoutSeconds), [0, 0, 30, 60, 120]);
+  assert.equal(lockoutSeconds(50), 900);
 });

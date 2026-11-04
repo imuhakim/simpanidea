@@ -24,8 +24,19 @@ export function icon(name) {
 }
 
 let toastTimer = null;
+let toastElement = null;
+
+/** Kembalikan toast ke body sebelum dialog yang memegangnya dibuang. */
+export function parkToast() {
+  if (toastElement) document.body.append(toastElement);
+}
+
 export function toast(message, isError = false) {
-  const element = document.getElementById('toast');
+  toastElement = toastElement || document.getElementById('toast');
+  const element = toastElement;
+  // Dialog berada di lapisan paling atas, jadi toast mesti berada di dalam dialog teratas untuk kelihatan.
+  const topDialog = [...document.querySelectorAll('dialog[open]')].at(-1);
+  (topDialog || document.body).append(element);
   element.textContent = message;
   element.classList.toggle('error', isError);
   element.hidden = false;
@@ -39,6 +50,7 @@ function showDialog(className, children, labelledBy, onClose) {
     if (event.target === dialog) dialog.close();
   });
   dialog.addEventListener('close', () => {
+    parkToast();
     dialog.remove();
     if (onClose) onClose();
   });

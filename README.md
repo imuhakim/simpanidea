@@ -79,6 +79,15 @@ SimpanIdea mungkin ambil beberapa minit untuk muncul dalam senarai Share selepas
 - App mengunci semula selepas 15 minit, atau bila kau tekan **Kunci password**.
 - Status kelas dan tarikh terakhir dibuka hanya direkod kalau kau buka kelas melalui butang **Buka** dalam app.
 
+## Kunci PIN
+
+- Hidupkan di **Tetapan → Kunci app**. PIN ialah 6 digit, dan berasingan untuk setiap peranti.
+- App dikunci setiap kali dibuka, selepas tidak digunakan (1 hingga 30 minit, lalai 5), dan bila kau tekan ikon kunci di sidebar.
+- Screenshot yang dikongsi tetap dihantar ke Google walaupun app terkunci, tapi kau perlu PIN untuk melihatnya.
+- Selepas 5 kali salah, kau perlu tunggu 30 saat, dan tempoh ini bertambah sehingga 15 minit.
+- **Lupa PIN?** Tekan butang tu di skrin kunci untuk kosongkan peranti. Data di Google selamat, tapi kau perlu masukkan URL Web App dan kunci rahsia semula, dan perubahan yang belum dihantar akan hilang.
+- PIN menghalang orang yang memegang peranti daripada membuka app dengan mudah. Ia bukan penyulitan, jadi kunci skrin phone masih perlu dipasang, dan jangan isi tetapan di komputer yang dikongsi.
+
 ## Had Tonton
 
 - Pemilik video boleh menghalang tontonan di luar app asal, dan video peribadi takkan dapat dimainkan. Butang **Buka di ...** sentiasa ada sebagai pilihan.

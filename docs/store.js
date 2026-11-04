@@ -51,6 +51,9 @@ const SimpanStore = (() => {
     putTables: (tables) => run(TABLES, 'readwrite', (store) => store.put(tables, 'all')),
     getImage: (id) => run(IMAGES, 'readonly', (store) => store.get(id)),
     putImage: (id, blob) => run(IMAGES, 'readwrite', (store) => store.put(blob, id)),
-    removeImage: (id) => run(IMAGES, 'readwrite', (store) => store.delete(id))
+    removeImage: (id) => run(IMAGES, 'readwrite', (store) => store.delete(id)),
+    async clearAll() {
+      for (const name of [QUEUE, TABLES, IMAGES]) await run(name, 'readwrite', (store) => store.clear());
+    }
   };
 })();

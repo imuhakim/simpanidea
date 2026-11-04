@@ -651,6 +651,50 @@ dialog::backdrop { background: var(--overlay); }
 .lightbox-close { position: fixed; top: 12px; right: 12px; color: #fff; }
 .lightbox-close:hover { background: rgb(255 255 255 / 14%); color: #fff; }
 
+/* Kunci PIN */
+.lock { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; background: var(--paper); }
+.lock[open] { display: flex; align-items: center; justify-content: center; }
+.lock::backdrop { background: var(--paper); }
+.lock-inner { display: flex; flex-direction: column; align-items: center; width: min(280px, 100%); padding: 20px 0; text-align: center; }
+.lock-brand { margin-bottom: 28px; font-size: 14.5px; font-weight: 650; letter-spacing: -.02em; }
+.lock-inner h2 { margin-bottom: 18px; font-size: 13px; font-weight: 500; color: var(--ink-2); }
+.lock-inner > .button { margin-top: 12px; }
+.pin-pad { display: flex; flex-direction: column; align-items: center; width: 100%; }
+.pin-dots { display: flex; gap: 12px; }
+.pin-dot { width: 10px; height: 10px; border: 1.5px solid var(--line-strong); border-radius: 50%; }
+.pin-dot.filled { border-color: var(--ink); background: var(--ink); }
+.pin-message { min-height: 1.5em; margin: 10px 0; font-size: 13px; color: var(--ink-3); }
+.pin-message.error { color: var(--signal); }
+.pin-keys { display: grid; grid-template-columns: repeat(3, 64px); gap: 8px 14px; justify-content: center; }
+.pin-key {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--raised);
+  color: var(--ink);
+  font: inherit;
+  font-size: 21px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.pin-key:hover { background: var(--tint); }
+.pin-key:active { background: var(--tint-strong); }
+.pin-key.plain { border-color: transparent; background: transparent; color: var(--ink-2); }
+.pin-key .icon { width: 20px; height: 20px; }
+.pin-key:disabled { opacity: .35; cursor: default; }
+.pin-modal { width: min(320px, calc(100vw - 32px)); }
+.pin-modal h2 { text-align: center; }
+.pin-modal .form-note { margin-bottom: 14px; }
+.pin-modal .pin-dots { margin-top: 4px; }
+.pin-modal .modal-foot { justify-content: center; margin-top: 8px; }
+.section-hint { margin: 0 0 10px; }
+.side-lock { display: flex; align-items: center; gap: 6px; }
+.side-lock .sync-status { flex: 1; min-width: 0; }
+
 .compose-previews { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; margin-bottom: 10px; }
 .compose-preview { position: relative; }
 .compose-preview img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; object-position: top; border: 1px solid var(--line); border-radius: 5px; }

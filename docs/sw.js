@@ -1,10 +1,10 @@
 importScripts('store.js');
 
-const CACHE_NAME = 'simpanidea-v4';
+const CACHE_NAME = 'simpanidea-v5';
 const APP_FILES = [
   './', 'index.html', 'app.js', 'store.js', 'style.css',
-  'lib/data.js', 'lib/dom.js', 'lib/images.js', 'lib/vault.js', 'lib/video.js',
-  'views/board.js', 'views/classes.js', 'views/compose.js', 'views/library.js',
+  'lib/data.js', 'lib/dom.js', 'lib/images.js', 'lib/pin.js', 'lib/vault.js', 'lib/video.js',
+  'views/board.js', 'views/classes.js', 'views/compose.js', 'views/library.js', 'views/lock.js',
   'views/search.js', 'views/settings.js', 'views/tasks.js', 'views/watch.js',
   'manifest.webmanifest', 'icon-192.png', 'icon-512.png'
 ];
