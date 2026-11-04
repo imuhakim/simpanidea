@@ -129,6 +129,48 @@ test('fail dibuang kalau Sheet gagal, dan cubaan semula berjaya', () => {
   assert.equal(dataRows(harness).length, 1);
 });
 
+test('listItems memulangkan semua item dalam bentuk objek', () => {
+  const { save, call } = ready();
+  assert.deepEqual(call({ action: 'listItems' }).items, []);
+  save(image);
+  const { items } = call({ action: 'listItems' });
+  assert.equal(items.length, 1);
+  assert.equal(items[0].id, ID);
+  assert.equal(items[0].type, 'image');
+  assert.equal(items[0].status, 'baru');
+  assert.match(items[0].driveUrl, /^https:/);
+});
+
+test('getImage memulangkan gambar item, dan menolak item tanpa gambar atau id tak sah', () => {
+  const { save, call } = ready();
+  save(image);
+  call({ action: 'saveItem', item: { id: 'nota-0001', type: 'note', text: 'x' } });
+  const result = call({ action: 'getImage', id: ID });
+  assert.equal(result.mimeType, 'image/webp');
+  assert.equal(result.dataBase64, PNG_BASE64);
+  assert.equal(call({ action: 'getImage', id: 'nota-0001' }).code, 'not_found');
+  assert.equal(call({ action: 'getImage', id: 'tiada-0001' }).code, 'not_found');
+  assert.equal(call({ action: 'getImage', id: '../rahsia' }).ok, false);
+});
+
+test('setStatus menukar status dan menolak nilai tak sah', () => {
+  const { save, call } = ready();
+  save(image);
+  assert.equal(call({ action: 'setStatus', id: ID, status: 'dilihat' }).ok, true);
+  assert.equal(call({ action: 'listItems' }).items[0].status, 'dilihat');
+  assert.equal(call({ action: 'setStatus', id: ID, status: '=FORMULA()' }).ok, false);
+  assert.equal(call({ action: 'setStatus', id: 'tiada-0001', status: 'baru' }).code, 'not_found');
+  assert.equal(call({ action: 'listItems' }).items[0].status, 'dilihat');
+});
+
+test('tindakan baca dan tukar status memerlukan kunci betul', () => {
+  const { harness, save } = ready();
+  save(image);
+  for (const body of [{ action: 'listItems' }, { action: 'getImage', id: ID }, { action: 'setStatus', id: ID, status: 'dilihat' }]) {
+    assert.equal(harness.post(JSON.stringify({ secret: 'salah', ...body })).code, 'unauthorized');
+  }
+});
+
 test('rotateSecret membatalkan kunci lama', () => {
   const { harness, secret, call } = ready();
   harness.rotateSecret();

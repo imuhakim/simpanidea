@@ -41,9 +41,9 @@ Kod boleh jadi awam sebab kunci rahsia dan data kau tak ada di dalamnya.
 ## Langkah 3: Pasang kat Android
 
 1. Buka alamat app dalam **Chrome** kat phone.
-2. Di **Tetapan**, tampal URL Web App dan kunci rahsia, kemudian tekan **Simpan dan uji**.
-3. Pastikan **Sambungan ke Google: berjaya** ditanda.
-4. Tekan **Pasang app**. Kalau butang tu tak keluar, buka menu Chrome (⋮) dan pilih **Add to Home screen** atau **Install app**, kemudian pilih **Install** kalau ditanya.
+2. Buka menu (☰) dan pilih **Tetapan**. Tampal URL Web App dan kunci rahsia, kemudian tekan **Simpan dan uji**.
+3. Pastikan **Sambungan ke Google: berjaya** ada di bahagian Semakan.
+4. Tekan **Pasang app** di Tetapan. Kalau butang tu tak keluar, buka menu Chrome (⋮) dan pilih **Add to Home screen** atau **Install app**, kemudian pilih **Install** kalau ditanya.
 5. Buka SimpanIdea dari home screen sekali, dan isi tetapan semula kalau kosong.
 
 ## Langkah 4: Ujian sebenar
@@ -68,6 +68,16 @@ SimpanIdea mungkin ambil beberapa minit untuk muncul dalam senarai Share selepas
 | Kod Apps Script diubah tapi tak berkesan | Deployment lama masih digunakan | **Deploy → Manage deployments → Edit → New version** |
 
 Kalau kunci terdedah, jalankan fungsi `rotateSecret` dan masukkan kunci baru dalam app.
+
+## Kemas kini backend
+
+Bila `Code.gs` berubah, app akan papar amaran "Backend Google masih versi lama".
+
+1. Tampal isi baru [apps-script/Code.gs](apps-script/Code.gs) dalam Apps Script dan simpan.
+2. Tekan **Deploy → Manage deployments**, kemudian ikon pensil (**Edit**).
+3. Di **Version**, pilih **New version**, dan tekan **Deploy**.
+
+Cara ni mengekalkan URL dan kunci rahsia yang sama, jadi tetapan app tak perlu diubah. Jangan pilih **New deployment**, sebab URL akan bertukar.
 
 ## Ujian di komputer
 

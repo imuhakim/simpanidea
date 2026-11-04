@@ -1,18 +1,21 @@
-// Barisan hantar dalam IndexedDB. Dikongsi antara halaman dan service worker,
-// supaya item yang dikongsi tidak hilang kalau tiada internet.
+// Storan peranti dalam IndexedDB, dikongsi antara halaman dan service worker.
+// queue: item yang belum sampai ke Google. items: salinan Sheet. images: gambar yang dah dimuat.
 const SimpanStore = (() => {
   const DB_NAME = 'simpanidea';
-  const DB_VERSION = 1;
+  const DB_VERSION = 2;
   const QUEUE = 'queue';
-  const SENT = 'sent';
-  const SENT_LIMIT = 20;
+  const ITEMS = 'items';
+  const IMAGES = 'images';
 
   function open() {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
       request.onupgradeneeded = () => {
-        request.result.createObjectStore(QUEUE, { keyPath: 'id' });
-        request.result.createObjectStore(SENT, { keyPath: 'id' });
+        const db = request.result;
+        if (!db.objectStoreNames.contains(QUEUE)) db.createObjectStore(QUEUE, { keyPath: 'id' });
+        if (!db.objectStoreNames.contains(ITEMS)) db.createObjectStore(ITEMS, { keyPath: 'id' });
+        if (!db.objectStoreNames.contains(IMAGES)) db.createObjectStore(IMAGES);
+        if (db.objectStoreNames.contains('sent')) db.deleteObjectStore('sent');
       };
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
@@ -34,8 +37,6 @@ const SimpanStore = (() => {
     }
   }
 
-  const byNewest = (a, b) => b.createdAt.localeCompare(a.createdAt);
-
   return {
     enqueue: (item) => run(QUEUE, 'readwrite', (store) => store.put(item)),
     removeQueued: (id) => run(QUEUE, 'readwrite', (store) => store.delete(id)),
@@ -43,24 +44,13 @@ const SimpanStore = (() => {
       const items = await run(QUEUE, 'readonly', (store) => store.getAll());
       return items.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
     },
-    async markSent(item, driveUrl) {
-      await run(SENT, 'readwrite', (store) => store.put({
-        id: item.id,
-        type: item.type,
-        title: item.title || item.url || item.text || '',
-        driveUrl: driveUrl || '',
-        createdAt: item.createdAt
-      }));
-      await run(QUEUE, 'readwrite', (store) => store.delete(item.id));
-      const sent = await run(SENT, 'readonly', (store) => store.getAll());
-      const excess = sent.sort(byNewest).slice(SENT_LIMIT);
-      for (const old of excess) {
-        await run(SENT, 'readwrite', (store) => store.delete(old.id));
-      }
-    },
-    async listSent() {
-      const items = await run(SENT, 'readonly', (store) => store.getAll());
-      return items.sort(byNewest);
-    }
+    listItems: () => run(ITEMS, 'readonly', (store) => store.getAll()),
+    putItem: (item) => run(ITEMS, 'readwrite', (store) => store.put(item)),
+    replaceItems: (items) => run(ITEMS, 'readwrite', (store) => {
+      store.clear();
+      items.forEach((item) => store.put(item));
+    }),
+    getImage: (id) => run(IMAGES, 'readonly', (store) => store.get(id)),
+    putImage: (id, blob) => run(IMAGES, 'readwrite', (store) => store.put(blob, id))
   };
 })();

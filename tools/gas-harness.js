@@ -63,6 +63,8 @@ function createHarness() {
           values.forEach((value, i) => { state.rows[row - 1 + i] = value.slice(); });
         },
         getValue: () => state.rows[row - 1][column - 1],
+        getValues: () => state.rows.slice(row - 1, row - 1 + rows).map((r) => r.slice(column - 1, column - 1 + columns)),
+        setValue: (value) => { state.rows[row - 1][column - 1] = value; },
         createTextFinder(text) {
           const finder = {
             matchEntireCell: () => finder,
@@ -96,7 +98,16 @@ function createHarness() {
     DriveApp: {
       getRootFolder: () => root,
       getFolderById: (id) => state.folders.find((f) => f.id === id),
-      getFileById: () => ({ moveTo() {} })
+      getFileById(id) {
+        const file = state.files.find((f) => f.id === id);
+        return {
+          moveTo() {},
+          getBlob: () => ({
+            getContentType: () => file.blob.mimeType,
+            getBytes: () => file.blob.bytes
+          })
+        };
+      }
     },
     SpreadsheetApp: { create: () => spreadsheet, openById: () => spreadsheet },
     LockService: {
@@ -108,6 +119,7 @@ function createHarness() {
     Utilities: {
       getUuid: () => require('node:crypto').randomUUID(),
       base64Decode: (text) => Array.from(Buffer.from(text, 'base64')),
+      base64Encode: (bytes) => Buffer.from(bytes).toString('base64'),
       newBlob: (bytes, mimeType, name) => ({ bytes, mimeType, name }),
       formatDate: (date, zone, format) => (format === 'yyyy-MM' ? '2026-11' : '20261104-120000')
     },

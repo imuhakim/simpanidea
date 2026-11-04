@@ -15,6 +15,8 @@ var ITEM_HEADERS = [
   'drive_file_id', 'drive_url', 'nama_fail', 'saiz_bait', 'status'
 ];
 
+var ITEM_STATUSES = ['baru', 'dilihat'];
+
 var MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 var MAX_TITLE_LENGTH = 500;
 var MAX_TEXT_LENGTH = 5000;
@@ -65,6 +67,9 @@ function doPost(e) {
 
     if (request.action === 'ping') return jsonResponse_({ ok: true, app: 'SimpanIdea' });
     if (request.action === 'saveItem') return jsonResponse_(saveItem_(request.item));
+    if (request.action === 'listItems') return jsonResponse_(listItems_());
+    if (request.action === 'getImage') return jsonResponse_(getImage_(request.id));
+    if (request.action === 'setStatus') return jsonResponse_(setStatus_(request.id, request.status));
     return jsonResponse_({ ok: false, code: 'bad_request', error: 'Tindakan tidak dikenali.' });
   } catch (err) {
     return jsonResponse_({ ok: false, code: 'error', error: String(err && err.message || err) });
@@ -77,14 +82,12 @@ function saveItem_(item) {
   lock.waitLock(30000);
   var file = null;
   try {
-    var sheet = SpreadsheetApp
-      .openById(PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID'))
-      .getSheetByName(ITEM_SHEET_NAME);
+    var sheet = getItemSheet_();
 
     // App mengulang hantar kalau jawapan hilang, jadi id yang sama tidak disimpan dua kali.
-    var existing = findRowById_(sheet, clean.id);
-    if (existing) {
-      return { ok: true, duplicate: true, id: clean.id, driveUrl: existing.driveUrl };
+    var existingRow = findRowById_(sheet, clean.id);
+    if (existingRow) {
+      return { ok: true, duplicate: true, id: clean.id, driveUrl: cellValue_(sheet, existingRow, 'drive_url') };
     }
 
     var now = new Date();
@@ -113,13 +116,74 @@ function saveItem_(item) {
   }
 }
 
+function listItems_() {
+  var sheet = getItemSheet_();
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { ok: true, items: [] };
+  var rows = sheet.getRange(2, 1, lastRow - 1, ITEM_HEADERS.length).getValues();
+  var col = {};
+  ITEM_HEADERS.forEach(function (name, index) { col[name] = index; });
+  var items = rows.filter(function (row) { return row[col.id]; }).map(function (row) {
+    var created = row[col.dicipta];
+    return {
+      id: String(row[col.id]),
+      createdAt: created instanceof Date ? created.toISOString() : String(created),
+      type: String(row[col.jenis]),
+      title: String(row[col.tajuk]),
+      url: String(row[col.url]),
+      text: String(row[col.nota]),
+      driveUrl: String(row[col.drive_url]),
+      status: String(row[col.status])
+    };
+  });
+  return { ok: true, items: items };
+}
+
+function getImage_(id) {
+  var cleanId = validateId_(id);
+  var sheet = getItemSheet_();
+  var row = findRowById_(sheet, cleanId);
+  if (!row) return { ok: false, code: 'not_found', error: 'Item tidak dijumpai.' };
+  // Hanya fail yang direkod dalam Sheet boleh dibaca, bukan sebarang fail Drive.
+  var fileId = cellValue_(sheet, row, 'drive_file_id');
+  if (!fileId) return { ok: false, code: 'not_found', error: 'Item ini tiada gambar.' };
+  var blob = DriveApp.getFileById(String(fileId)).getBlob();
+  return { ok: true, mimeType: blob.getContentType(), dataBase64: Utilities.base64Encode(blob.getBytes()) };
+}
+
+function setStatus_(id, status) {
+  var cleanId = validateId_(id);
+  if (ITEM_STATUSES.indexOf(status) === -1) throw new Error('Status tidak sah.');
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var sheet = getItemSheet_();
+    var row = findRowById_(sheet, cleanId);
+    if (!row) return { ok: false, code: 'not_found', error: 'Item tidak dijumpai.' };
+    sheet.getRange(row, ITEM_HEADERS.indexOf('status') + 1).setValue(status);
+    return { ok: true, id: cleanId, status: status };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function getItemSheet_() {
+  return SpreadsheetApp
+    .openById(PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID'))
+    .getSheetByName(ITEM_SHEET_NAME);
+}
+
+function validateId_(id) {
+  if (!/^[A-Za-z0-9-]{8,64}$/.test(String(id))) throw new Error('Id tidak sah.');
+  return String(id);
+}
+
 function validateItem_(item) {
   if (!item || typeof item !== 'object') throw new Error('Item kosong.');
-  if (!/^[A-Za-z0-9-]{8,64}$/.test(String(item.id))) throw new Error('Id tidak sah.');
   if (['image', 'link', 'note'].indexOf(item.type) === -1) throw new Error('Jenis tidak sah.');
 
   var clean = {
-    id: String(item.id),
+    id: validateId_(item.id),
     type: item.type,
     title: cleanText_(item.title, MAX_TITLE_LENGTH),
     text: cleanText_(item.text, MAX_TEXT_LENGTH),
@@ -167,9 +231,11 @@ function findRowById_(sheet, id) {
     .createTextFinder(id)
     .matchEntireCell(true)
     .findNext();
-  if (!match) return null;
-  var driveUrlColumn = ITEM_HEADERS.indexOf('drive_url') + 1;
-  return { driveUrl: sheet.getRange(match.getRow(), driveUrlColumn).getValue() };
+  return match ? match.getRow() : null;
+}
+
+function cellValue_(sheet, row, header) {
+  return sheet.getRange(row, ITEM_HEADERS.indexOf(header) + 1).getValue();
 }
 
 function cleanText_(value, maxLength) {

@@ -1,6 +1,6 @@
 importScripts('store.js');
 
-const CACHE_NAME = 'simpanidea-v2';
+const CACHE_NAME = 'simpanidea-v3';
 const APP_FILES = [
   './', 'index.html', 'app.js', 'store.js', 'style.css',
   'manifest.webmanifest', 'icon-192.png', 'icon-512.png'
