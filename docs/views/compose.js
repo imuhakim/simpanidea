@@ -8,9 +8,15 @@ export function openComposer({ text = '', ruang = '' } = {}) {
   const previewUrls = new Map();
   const previews = h('div', { class: 'compose-previews' });
   const textInput = h('textarea', { class: 'input', rows: 4, value: text, placeholder: 'Tampal link, atau tulis idea kau' });
-  const place = h('select', { class: 'input' },
+  const titleInput = h('input', { class: 'input', type: 'text', placeholder: 'Contoh: Resit servis kereta' });
+  const titleField = field('Tajuk (ini sahaja yang kelihatan di Info Penting)', titleInput);
+  const place = h('select', {
+    class: 'input',
+    onchange: () => { titleField.hidden = place.value !== 'info'; }
+  },
     h('option', { value: '', selected: ruang === '' }, 'Inbox'),
     h('option', { value: 'info', selected: ruang === 'info' }, 'Info Penting'));
+  titleField.hidden = ruang !== 'info';
 
   function drawPreviews() {
     previews.replaceChildren(...files.map((file) => h('div', { class: 'compose-preview' },
@@ -46,14 +52,16 @@ export function openComposer({ text = '', ruang = '' } = {}) {
       return;
     }
     const chosenPlace = place.value;
+    const chosenTitle = chosenPlace === 'info' ? titleInput.value.trim() : '';
     try {
       // Dengan teks, gambar menjadi lampiran nota. Tanpa teks, setiap gambar berdiri sendiri.
       const images = await Promise.all(files.map((file) => imageItem(
-        file, value ? { ruang: 'lampiran', title: '' } : { ruang: chosenPlace })));
+        file, value ? { ruang: 'lampiran', title: '' } : (chosenPlace === 'info' ? { ruang: 'info', title: chosenTitle } : { ruang: chosenPlace }))));
       const entries = [...images];
       if (value) {
         entries.push(itemFromText(value, {
           ruang: chosenPlace,
+          title: chosenTitle,
           gambar: images.map((image) => image.id).join(',')
         }));
       }
@@ -70,7 +78,8 @@ export function openComposer({ text = '', ruang = '' } = {}) {
       field('Link atau nota', textInput),
       previews,
       h('div', { class: 'button-row field' }, photoButtons(addFiles)),
-      field('Simpan ke', place)
+      field('Simpan ke', place),
+      titleField
     ],
     actions: [
       h('span', { class: 'foot-spacer' }),

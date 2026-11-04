@@ -1263,3 +1263,22 @@ dialog::backdrop { background: var(--overlay); backdrop-filter: blur(3px); anima
 .shortcut-guide ol { margin: 0; padding: 0 14px 12px 32px; color: var(--ink-2); }
 .shortcut-guide li { margin-top: 5px; }
 .shortcut-guide[open] { animation: fade .2s ease; }
+
+/* Info Penting tersorok */
+.info-row {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--raised);
+  box-shadow: var(--shadow-1);
+  transition: box-shadow .18s, border-color .18s;
+}
+.info-row.open { border-color: color-mix(in srgb, var(--tone) 40%, var(--line)); box-shadow: var(--shadow-2); }
+.info-head { display: flex; align-items: center; gap: 12px; min-height: 62px; padding: 9px 8px 9px 12px; }
+.info-eye { color: var(--tone-fg); background: var(--tone-soft); }
+.info-eye:hover { transform: scale(1.08); }
+.info-content { padding: 2px 14px 14px; animation: rise .24s var(--ease); }
+.info-images { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-bottom: 12px; }
+.info-image { display: block; width: 100%; padding: 0; border: 0; border-radius: 12px; background: none; cursor: zoom-in; }
+.info-image .image-holder { width: 100%; aspect-ratio: 3 / 4; border: 1px solid var(--line); border-radius: 12px; }
+.info-text { margin-bottom: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.info-text.muted { color: var(--ink-3); }

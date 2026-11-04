@@ -1,12 +1,13 @@
 // Inbox, Semua, Screenshot, Link, Nota dan Info Penting.
 import { addItems, findItem, idList, imageItem, patchItem, processQueue, isConfigured, state, render, loadQueue } from '../lib/data.js';
-import { domainOf, emptyState, field, formatDate, h, icon, isWebUrl, openSheet, toast } from '../lib/dom.js';
+import { askText, domainOf, emptyState, field, formatDate, h, icon, isWebUrl, openSheet, toast } from '../lib/dom.js';
 import { attachmentEditor, imageHolder, imageUrlFor, openImage, photoButtons } from '../lib/images.js';
 import { parseVideo } from '../lib/video.js';
 import { archiveWithUndo, manageButtons } from './manage.js';
 import { askAiButton } from './ai.js';
 
-const notAttachment = (item) => item.ruang !== 'lampiran';
+// Info Penting berasingan dan tersorok, jadi isinya tak muncul di senarai lain.
+const notAttachment = (item) => item.ruang !== 'lampiran' && item.ruang !== 'info';
 const TYPE_LABEL = { image: 'Gambar', link: 'Link', note: 'Nota' };
 const TYPE_ICON = { image: 'image', link: 'link', note: 'note' };
 
@@ -36,7 +37,7 @@ export const LIBRARY_VIEWS = {
     empty: ['Belum ada nota', 'Tekan Tambah untuk tulis idea kau.']
   },
   info: {
-    title: 'Info Penting', icon: 'info', layout: 'mixed',
+    title: 'Info Penting', icon: 'info', layout: 'hidden',
     filter: (item) => item.ruang === 'info',
     empty: ['Belum ada info penting', 'Ambil gambar resit, kad, tiket atau apa saja yang kau perlu rujuk semula.']
   }
@@ -59,6 +60,7 @@ function subtitle(item) {
 const newestFirst = (a, b) => String(b.createdAt).localeCompare(String(a.createdAt));
 
 function queuedThumb(entry) {
+  if (entry.ruang === 'info') return h('span', { class: 'thumb' }, icon('lock'));
   if (entry.type === 'image' && entry.ready) return imageHolder(entry.id, 'thumb');
   return h('span', { class: 'thumb' }, icon(TYPE_ICON[entry.type] || 'note'));
 }
@@ -108,7 +110,7 @@ function queueRow(entry) {
     h('div', { class: 'row-main' },
       queuedThumb(entry),
       h('span', { class: 'row-text' },
-        h('span', { class: 'row-title' }, displayTitle(entry)),
+        h('span', { class: 'row-title' }, entry.ruang === 'info' ? infoTitle(entry) : displayTitle(entry)),
         h('span', { class: 'row-sub row-state' + (failed ? ' failed' : '') }, label))),
     entry.status !== 'sending' && h('div', { class: 'row-side' },
       isConfigured() && h('button', { class: 'button plain', type: 'button', onclick: processQueue }, 'Cuba lagi'),
@@ -174,6 +176,59 @@ function noteCard(item) {
       images > 0 && [' · ', icon('clip'), String(images)]));
 }
 
+/* Info Penting: hanya tajuk kelihatan, dan isi keluar bila ikon mata ditekan. */
+const revealed = new Set();
+
+export function hideAllInfo() {
+  revealed.clear();
+}
+
+export function infoTitle(item) {
+  const title = String(item.title || '').replace(/\.[a-z0-9]{2,5}$/i, '').trim();
+  return title || 'Tanpa tajuk';
+}
+
+function infoContent(item) {
+  const [firstAttachment] = idList(item.gambar);
+  const imageIds = item.type === 'image' ? [item.id] : idList(item.gambar);
+  return h('div', { class: 'info-content' },
+    imageIds.length > 0 && h('div', { class: 'info-images' }, imageIds.map((id) => h('button', {
+      class: 'info-image',
+      type: 'button',
+      'aria-label': 'Besarkan gambar',
+      onclick: () => openImage(id, infoTitle(item))
+    }, imageHolder(id)))),
+    item.text && h('p', { class: 'info-text' }, item.text),
+    isWebUrl(item.url) && h('a', { class: 'sheet-link', href: item.url, target: '_blank', rel: 'noopener noreferrer' }, item.url),
+    !imageIds.length && !item.text && !item.url && !firstAttachment && h('p', { class: 'info-text muted' }, 'Tiada isi.'),
+    h('div', { class: 'button-row' },
+      h('button', { class: 'button', type: 'button', onclick: () => openItem(item.id) }, 'Buka dan edit')));
+}
+
+function infoRow(item) {
+  const open = revealed.has(item.id);
+  const title = infoTitle(item);
+  return h('article', { class: 'info-row' + (open ? ' open' : '') },
+    h('div', { class: 'info-head' },
+      h('span', { class: 'thumb' }, icon(open ? TYPE_ICON[item.type] || 'note' : 'lock')),
+      h('span', { class: 'row-text' },
+        h('span', { class: 'row-title' }, title),
+        h('span', { class: 'row-sub' }, formatDate(item.createdAt))),
+      h('button', {
+        class: 'icon-button info-eye',
+        type: 'button',
+        'aria-pressed': String(open),
+        'aria-label': (open ? 'Sorok isi: ' : 'Tunjuk isi: ') + title,
+        title: open ? 'Sorok' : 'Tunjuk',
+        onclick: () => {
+          if (open) revealed.delete(item.id);
+          else revealed.add(item.id);
+          render();
+        }
+      }, icon(open ? 'eye-off' : 'eye'))),
+    open && infoContent(item));
+}
+
 function pendingEntries(filter) {
   return state.queue.filter((entry) => !entry.kind && filter(entry));
 }
@@ -188,7 +243,7 @@ export function renderLibrary(key) {
 
   if (key === 'info') {
     children.push(h('div', { class: 'page-head' },
-      h('p', { class: 'page-note' }, 'Gambar dan catatan yang kau perlu rujuk semula, berasingan daripada Inbox.'),
+      h('p', { class: 'page-note' }, 'Hanya tajuk kelihatan. Tekan ikon mata untuk tengok isi.'),
       h('div', { class: 'button-row' }, photoButtons(saveInfoPhotos))));
   }
 
@@ -205,11 +260,8 @@ export function renderLibrary(key) {
     children.push(h('div', { class: 'gallery' }, items.map(galleryTile)));
   } else if (view.layout === 'notes') {
     children.push(h('div', { class: 'notes' }, items.map(noteCard)));
-  } else if (view.layout === 'mixed') {
-    const images = items.filter((item) => item.type === 'image');
-    const others = items.filter((item) => item.type !== 'image');
-    if (images.length) children.push(h('div', { class: 'gallery' }, images.map(galleryTile)));
-    if (others.length) children.push(h('div', { class: 'rows' }, others.map((item) => itemRow(item))));
+  } else if (view.layout === 'hidden') {
+    children.push(h('div', { class: 'rows' }, items.map(infoRow)));
   } else {
     children.push(h('div', { class: 'rows' }, items.map((item) => itemRow(item, {
       markable: key === 'inbox',
@@ -222,7 +274,10 @@ export function renderLibrary(key) {
 // Gambar terus disimpan; tajuk boleh diisi kemudian dalam butiran.
 async function saveInfoPhotos(files) {
   try {
-    await addItems(await Promise.all(files.map((file) => imageItem(file, { ruang: 'info', title: '' }))));
+    // Tajuk sahaja yang kelihatan di sini, jadi minta terus masa menyimpan.
+    const title = await askText({ title: 'Tajuk untuk gambar ni', label: 'Tajuk', confirmLabel: 'Simpan' });
+    if (title === null) return;
+    await addItems(await Promise.all(files.map((file) => imageItem(file, { ruang: 'info', title }))));
   } catch (err) {
     toast(err.message, true);
   }

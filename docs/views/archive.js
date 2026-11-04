@@ -2,7 +2,7 @@
 import { TRASH_LIFETIME_DAYS, hardDelete, itemFromRow, recordsIn } from '../lib/data.js';
 import { askConfirm, emptyState, formatDate, h, icon, startOfDay, toast } from '../lib/dom.js';
 import { imageHolder } from '../lib/images.js';
-import { displayTitle, openItem } from './library.js';
+import { displayTitle, infoTitle, openItem } from './library.js';
 import { openTask } from './tasks.js';
 import { openCard } from './board.js';
 import { openClass } from './classes.js';
@@ -16,11 +16,13 @@ const SECTIONS = [
 ];
 
 function titleOf(table, record) {
+  if (table === 'Item' && record.ruang === 'info') return infoTitle(itemFromRow(record));
   if (table === 'Item') return displayTitle(itemFromRow(record));
   return record.tajuk || record.nama || 'Tanpa tajuk';
 }
 
 function thumbFor(table, record, iconName) {
+  if (record.ruang === 'info') return h('span', { class: 'thumb' }, icon('lock'));
   if (table === 'Item' && record.jenis === 'image') return imageHolder(record.id, 'thumb');
   return h('span', { class: 'thumb' }, icon(iconName));
 }

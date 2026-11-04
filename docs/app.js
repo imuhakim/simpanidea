@@ -1,7 +1,7 @@
 import { addItems, imageItem, itemFromText, isConfigured, loadLocalData, processQueue, recordsIn, refresh, render, setRenderer, state } from './lib/data.js';
 import { h, icon, toast } from './lib/dom.js';
 import { openComposer } from './views/compose.js';
-import { LIBRARY_VIEWS, renderLibrary } from './views/library.js';
+import { LIBRARY_VIEWS, hideAllInfo } from './views/library.js';
 import { renderSearch } from './views/search.js';
 import { renderTasks } from './views/tasks.js';
 import { renderBoard } from './views/board.js';
@@ -180,6 +180,7 @@ function renderAll() {
 function route() {
   const key = location.hash.slice(1);
   state.view = VIEWS[key] ? key : 'inbox';
+  hideAllInfo();
   closeMenu();
   document.querySelectorAll('dialog[open]:not(.lock)').forEach((dialog) => dialog.close());
   renderChrome();
@@ -308,6 +309,8 @@ async function start() {
     onLock: () => {
       lockVault();
       clearAiChat();
+      hideAllInfo();
+      render();
     },
     onChange: renderChrome
   });
@@ -354,6 +357,11 @@ async function start() {
     refresh();
   });
   document.addEventListener('visibilitychange', () => {
+    // Isi Info Penting disorok semula sebaik app ditinggalkan.
+    if (document.visibilityState === 'hidden') {
+      hideAllInfo();
+      render();
+    }
     if (document.visibilityState === 'visible') {
       processQueue();
       refresh();

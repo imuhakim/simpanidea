@@ -89,7 +89,15 @@ iPhone tak benarkan web app masuk senarai Share, jadi 2 Shortcut kecil mengganti
 - **Simpan Gambar:** menerima gambar dari Photos, termasuk banyak gambar sekali gus.
 - **Simpan Link:** menerima link dan teks dari Safari dan app lain.
 
-Kunci rahsia ada di dalam Shortcut tu, jadi jangan kongsi Shortcut dengan sesiapa. Kalau terdedah, jalankan `rotateSecret`, dan kemas kini app serta kedua-dua Shortcut.
+Shortcut guna **kunci Shortcut** yang berasingan daripada kunci rahsia. Ia cuma boleh menambah item, dan tak boleh membaca, mengubah atau memadam data. Kalau tersebar, tekan **Tukar kunci** di Tetapan, dan kemas kini kedua-dua Shortcut.
+
+## Info Penting tersorok
+
+- Hanya tajuk dan tarikh kelihatan. Tekan ikon mata untuk tengok isi, dan tekan sekali lagi untuk sorok.
+- Isi disorok semula bila kau tukar halaman, tinggalkan app, atau app dikunci.
+- Rekod Info Penting tak muncul di Semua, Screenshot, Link dan Nota. Carian hanya melihat tajuknya.
+- Tanya AI hanya menerima tajuknya, kecuali kau bertanya terus dari rekod tersebut.
+- Ini penyorok paparan, bukan penyulitan. Isinya masih biasa dalam Drive dan Sheet, jadi jangan simpan password di sini. Gunakan Kelas untuk password.
 
 ## Pindah, Arkib dan Sampah
 

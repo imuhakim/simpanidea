@@ -131,6 +131,15 @@ test('konteks AI mengandungi data berguna tanpa rahsia atau sampah', () => {
   }
 });
 
+test('konteks AI hanya mengandungi tajuk untuk Info Penting', () => {
+  const tables = contextTables();
+  tables.Item.push({ id: 'z', jenis: 'note', tajuk: 'Nombor akaun', nota: 'ISI-SULIT-123', url: 'https://sulit.my', ruang: 'info', keadaan: '' });
+  const text = buildAiContext(tables, { today: '2026-11-04', view: 'Inbox' });
+  assert.ok(text.includes('Nombor akaun'));
+  assert.ok(!text.includes('ISI-SULIT-123'));
+  assert.ok(!text.includes('sulit.my'));
+});
+
 test('konteks AI dipendekkan bila data terlalu banyak, dan yang terbaru dikekalkan', () => {
   const tables = contextTables();
   tables.Item = Array.from({ length: 2000 }, (_, i) => ({

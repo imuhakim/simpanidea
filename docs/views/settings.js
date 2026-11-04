@@ -1,6 +1,6 @@
 // Tetapan: sambungan Google, pemasangan app dan perubahan yang gagal dihantar.
-import { isAllowedBackend, loadQueue, loadSettings, processQueue, refresh, render, saveSettings, state } from '../lib/data.js';
-import { copyText, field, h, icon, toast } from '../lib/dom.js';
+import { callBackend, isAllowedBackend, loadQueue, loadSettings, processQueue, refresh, render, saveSettings, state } from '../lib/data.js';
+import { askConfirm, copyText, field, h, icon, toast } from '../lib/dom.js';
 import { renderLockSettings } from './lock.js';
 import { renderAiSettings } from './ai.js';
 
@@ -43,20 +43,50 @@ function renderShortcutGuide() {
   const copyButton = (label, read, done) => h('button', {
     class: 'button',
     type: 'button',
-    onclick: () => {
-      const value = read();
+    onclick: async () => {
+      const value = await read();
       if (value) copyText(value, done);
-      else toast('Isi sambungan Google dulu', true);
     }
   }, icon('copy'), label);
+
+  const readUrl = () => {
+    const { url } = loadSettings();
+    if (!url) toast('Isi sambungan Google dulu', true);
+    return url;
+  };
+
+  const fetchKey = async (action) => {
+    try {
+      const result = await callBackend({ action });
+      if (result.ok) return result.key;
+      toast(/Tindakan/.test(result.error) ? 'Backend Google perlu dikemas kini dulu' : result.error, true);
+    } catch {
+      toast('Tak dapat sampai ke Google', true);
+    }
+    return null;
+  };
 
   return h('section', {},
     h('h2', {}, 'Share dari iPhone'),
     h('p', { class: 'field-hint section-hint' },
-      'iPhone tak benarkan web app masuk senarai Share. Bina 2 Shortcut kecil ni untuk menggantikannya. Android tak perlukan ini.'),
+      'iPhone tak benarkan web app masuk senarai Share. Bina 2 Shortcut kecil ni untuk menggantikannya. Android tak perlukan ini. Guna kunci Shortcut, bukan kunci rahsia: ia cuma boleh menambah item, dan tak boleh membaca data kau.'),
     h('div', { class: 'button-row shortcut-copy' },
-      copyButton('Salin URL', () => loadSettings().url, 'URL disalin'),
-      copyButton('Salin kunci', () => loadSettings().secret, 'Kunci rahsia disalin')),
+      copyButton('Salin URL', readUrl, 'URL disalin'),
+      copyButton('Salin kunci Shortcut', () => fetchKey('shortcutKey'), 'Kunci Shortcut disalin'),
+      h('button', {
+        class: 'button plain',
+        type: 'button',
+        onclick: async () => {
+          const yes = await askConfirm({
+            title: 'Tukar kunci Shortcut?',
+            text: 'Kunci lama berhenti berfungsi serta-merta, dan kedua-dua Shortcut perlu dikemas kini dengan kunci baru.',
+            confirmLabel: 'Tukar'
+          });
+          if (!yes) return;
+          const key = await fetchKey('rotateShortcutKey');
+          if (key) copyText(key, 'Kunci baru dibuat dan disalin');
+        }
+      }, 'Tukar kunci')),
     h('details', { class: 'shortcut-guide' },
       h('summary', {}, 'Shortcut 1: Simpan Gambar'),
       h('ol', {},
@@ -68,7 +98,7 @@ function renderShortcutGuide() {
         shortcutStep('Tambah Base64 Encode, dengan Line Breaks: None.'),
         shortcutStep('Tambah Get Contents of URL, dan tampal URL Web App.'),
         shortcutStep('Tekan Show More: Method POST, Request Body JSON.'),
-        shortcutStep('Tambah 3 medan teks: secret (tampal kunci rahsia), action (tulis quickSave), image (pilih Base64 Encoded).'),
+        shortcutStep('Tambah 3 medan teks: secret (tampal kunci Shortcut), action (tulis quickSave), image (pilih Base64 Encoded).'),
         shortcutStep('Selepas End Repeat, tambah Show Notification: Disimpan.'))),
     h('details', { class: 'shortcut-guide' },
       h('summary', {}, 'Shortcut 2: Simpan Link'),
@@ -77,10 +107,10 @@ function renderShortcutGuide() {
         shortcutStep('Hidupkan Show in Share Sheet, dan pilih URLs dan Text sahaja.'),
         shortcutStep('Tambah Get Contents of URL, dan tampal URL Web App.'),
         shortcutStep('Tekan Show More: Method POST, Request Body JSON.'),
-        shortcutStep('Tambah 3 medan teks: secret (tampal kunci rahsia), action (tulis quickSave), text (pilih Shortcut Input).'),
+        shortcutStep('Tambah 3 medan teks: secret (tampal kunci Shortcut), action (tulis quickSave), text (pilih Shortcut Input).'),
         shortcutStep('Tambah Show Notification: Disimpan.'))),
     h('p', { class: 'field-hint' },
-      'Selepas siap, Share dari Photos atau Safari dan pilih Shortcut tu. Jangan kongsi Shortcut ni dengan sesiapa, sebab kunci rahsia ada di dalamnya.'));
+      'Selepas siap, Share dari Photos atau Safari dan pilih Shortcut tu. Kalau Shortcut tersebar, orang lain cuma boleh menambah item. Tekan Tukar kunci untuk menghentikannya.'));
 }
 
 export function updateSettings() {

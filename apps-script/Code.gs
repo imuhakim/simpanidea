@@ -110,15 +110,21 @@ function doGet() {
 function doPost(e) {
   try {
     var request = JSON.parse(e.postData.contents);
-    var secret = PropertiesService.getScriptProperties().getProperty('APP_SECRET');
+    var props = PropertiesService.getScriptProperties();
+    var secret = props.getProperty('APP_SECRET');
     if (!secret) return jsonResponse_({ ok: false, code: 'not_setup', error: 'Jalankan setup() dahulu.' });
-    if (request.secret !== secret) return jsonResponse_({ ok: false, code: 'unauthorized', error: 'Kunci rahsia salah.' });
+    // Kunci Shortcut hanya boleh menambah item, jadi kebocorannya tak mendedahkan data.
+    var shortcutKey = props.getProperty('SHORTCUT_KEY');
+    var isShortcut = request.action === 'quickSave' && Boolean(shortcutKey) && request.secret === shortcutKey;
+    if (request.secret !== secret && !isShortcut) return jsonResponse_({ ok: false, code: 'unauthorized', error: 'Kunci rahsia salah.' });
 
     switch (request.action) {
       case 'ping': return jsonResponse_({ ok: true, app: 'SimpanIdea' });
       case 'listAll': return jsonResponse_(listAll_());
       case 'saveItem': return jsonResponse_(saveItem_(request.item));
       case 'quickSave': return jsonResponse_(quickSave_(request));
+      case 'shortcutKey': return jsonResponse_(shortcutKey_(false));
+      case 'rotateShortcutKey': return jsonResponse_(shortcutKey_(true));
       case 'getImage': return jsonResponse_(getImage_(request.id));
       case 'saveRecord': return jsonResponse_(saveRecord_(request.table, request.record));
       case 'deleteRecord': return jsonResponse_(deleteRecord_(request.table, request.id));
@@ -267,6 +273,16 @@ function quickSave_(request) {
     return saveItem_({ id: id, type: 'link', url: match[0], text: text === match[0] ? '' : text });
   }
   return saveItem_({ id: id, type: 'note', text: text });
+}
+
+function shortcutKey_(rotate) {
+  var props = PropertiesService.getScriptProperties();
+  var key = props.getProperty('SHORTCUT_KEY');
+  if (!key || rotate) {
+    key = newSecret_();
+    props.setProperty('SHORTCUT_KEY', key);
+  }
+  return { ok: true, key: key };
 }
 
 function imageTypeFromBase64_(base64) {

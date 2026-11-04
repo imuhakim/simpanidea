@@ -12,6 +12,8 @@ const STATUS_LABEL = { belum: 'belum buka', tengah: 'tengah belajar', siap: 'dah
 const PLACE_LABEL = { info: 'info penting' };
 
 function itemLine(item) {
+  // Isi Info Penting tak dihantar kecuali pengguna bertanya dari rekod tersebut.
+  if (item.ruang === 'info') return line((item.jenis || 'item') + archivedMark(item), PLACE_LABEL.info, clip(item.tajuk));
   return line(
     (item.jenis || 'item') + archivedMark(item),
     PLACE_LABEL[item.ruang],

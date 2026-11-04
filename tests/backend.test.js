@@ -443,6 +443,49 @@ test('quickSave menolak kandungan tak sah dan kunci salah', () => {
   assert.equal(harness.state.files.length, 0);
 });
 
+test('kunci Shortcut hanya boleh menambah item, dan boleh ditukar', () => {
+  const { harness, secret, call, save, list } = ready();
+  save(image);
+  const key = call({ action: 'shortcutKey' }).key;
+  assert.equal(key.length, 64);
+  assert.notEqual(key, secret);
+  assert.equal(call({ action: 'shortcutKey' }).key, key);
+
+  const asShortcut = (body) => harness.post(JSON.stringify({ secret: key, ...body }));
+  assert.equal(asShortcut({ action: 'quickSave', text: 'https://contoh.my/a' }).ok, true);
+  assert.equal(list().Item.length, 2);
+
+  const blocked = [
+    { action: 'ping' },
+    { action: 'listAll' },
+    { action: 'getImage', id: ID },
+    { action: 'saveItem', item: { id: 'lain-0001', type: 'note', text: 'x' } },
+    { action: 'saveRecord', table: 'Item', record: { id: ID, keadaan: 'sampah' } },
+    { action: 'deleteRecord', table: 'Item', id: ID },
+    { action: 'resolveUrl', url: 'https://vt.tiktok.com/abc' },
+    { action: 'aiStatus' },
+    { action: 'aiChat', model: 'claude-opus-5-5', messages: [{ role: 'user', text: 'x' }] },
+    { action: 'saveAiKey', key: 'x' },
+    { action: 'removeAiKey' },
+    { action: 'shortcutKey' },
+    { action: 'rotateShortcutKey' }
+  ];
+  for (const body of blocked) assert.equal(asShortcut(body).code, 'unauthorized', body.action);
+  assert.equal(list().Item.length, 2);
+
+  const newKey = call({ action: 'rotateShortcutKey' }).key;
+  assert.notEqual(newKey, key);
+  assert.equal(asShortcut({ action: 'quickSave', text: 'lama' }).code, 'unauthorized');
+  assert.equal(call({ action: 'ping' }).ok, true);
+});
+
+test('quickSave tiada kunci Shortcut menolak nilai kosong', () => {
+  const { harness } = ready();
+  for (const value of [null, '', undefined]) {
+    assert.equal(harness.post(JSON.stringify({ secret: value, action: 'quickSave', text: 'x' })).code, 'unauthorized');
+  }
+});
+
 test('rotateSecret membatalkan kunci lama', () => {
   const { harness, secret, call } = ready();
   harness.rotateSecret();
