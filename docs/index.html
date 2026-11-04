@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://script.google.com https://script.googleusercontent.com; img-src 'self' blob: https://i.ytimg.com; frame-src https://www.youtube-nocookie.com https://www.tiktok.com https://www.facebook.com; object-src 'none'; base-uri 'none'">
-  <meta name="theme-color" content="#fbfaf8" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#141311" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f5f6fb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#12131b" media="(prefers-color-scheme: dark)">
   <title>SimpanIdea</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon-192.png">
@@ -48,7 +48,7 @@
 
     <aside id="sidebar" class="sidebar" aria-label="Menu utama">
       <div class="brand">
-        <span class="brand-name">SimpanIdea</span>
+        <span class="brand-name">Simpan<span>Idea</span></span>
         <button id="close-menu" class="icon-button" type="button" aria-label="Tutup menu">
           <svg class="icon" aria-hidden="true"><use href="#i-close"/></svg>
         </button>
@@ -67,7 +67,13 @@
         <button id="open-menu" class="icon-button" type="button" aria-label="Buka menu">
           <svg class="icon" aria-hidden="true"><use href="#i-menu"/></svg>
         </button>
-        <h1 id="view-title" class="view-title"></h1>
+        <div class="view-head">
+          <span id="view-icon" class="view-icon"></span>
+          <div class="view-text">
+            <h1 id="view-title" class="view-title"></h1>
+            <p id="view-sub" class="view-sub"></p>
+          </div>
+        </div>
         <label class="search">
           <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
           <span class="visually-hidden">Cari</span>

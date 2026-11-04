@@ -3,8 +3,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const zlib = require('node:zlib');
 
-const BG = [0x1a, 0x19, 0x16];
-const FG = [0xfb, 0xfa, 0xf8];
+const BG = [0xd9, 0x43, 0x2f];
+const FG = [0xff, 0xff, 0xff];
 
 // Bentuk penanda buku, dalam zon selamat ikon maskable.
 function isBookmark(x, y) {

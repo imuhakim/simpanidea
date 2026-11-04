@@ -93,6 +93,11 @@ function pinPad({ onComplete }) {
       digits = '';
       drawDots();
     },
+    shake() {
+      dots.classList.remove('shake');
+      void dots.offsetWidth;
+      dots.classList.add('shake');
+    },
     setMessage(text, isError = true) {
       message.textContent = text;
       message.classList.toggle('error', isError);
@@ -151,6 +156,7 @@ function showLockScreen() {
         return;
       }
       pad.clear();
+      pad.shake();
       if (secondsLeft() > 0) {
         startCountdown(pad, () => {});
       } else {
@@ -161,7 +167,7 @@ function showLockScreen() {
 
   lockDialog = h('dialog', { class: 'lock', 'aria-label': 'App dikunci' },
     h('div', { class: 'lock-inner' },
-      h('p', { class: 'lock-brand' }, 'SimpanIdea'),
+      h('p', { class: 'lock-brand' }, 'Simpan', h('span', {}, 'Idea')),
       h('h2', {}, 'Masukkan PIN'),
       pad.element,
       h('button', { class: 'button plain', type: 'button', onclick: forgotPin }, 'Lupa PIN?')));

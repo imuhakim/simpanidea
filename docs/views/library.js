@@ -83,7 +83,11 @@ export function itemRow(item, { markable = false, showUnread = false } = {}) {
         type: 'button',
         'aria-label': 'Tanda dah tengok: ' + displayTitle(item),
         title: 'Tanda dah tengok',
-        onclick: () => patchItem(item.id, { status: 'dilihat' })
+        onclick: (event) => {
+          // Baris meluncur keluar dulu sebelum senarai dilukis semula.
+          event.currentTarget.closest('.row').classList.add('leaving');
+          setTimeout(() => patchItem(item.id, { status: 'dilihat' }), 200);
+        }
       }, icon('check'))));
 }
 
@@ -122,10 +126,37 @@ function galleryTile(item) {
     : null);
 }
 
+// Warna tetap untuk setiap nota, supaya tidak berubah setiap kali dibuka.
+function noteColour(id) {
+  let total = 0;
+  for (const char of String(id)) total = (total + char.charCodeAt(0)) % 997;
+  return total % 6;
+}
+
+function statTile(tone, iconName, value, label) {
+  return h('a', { class: 'stat', href: '#' + tone, 'data-tone': tone },
+    h('span', { class: 'stat-icon' }, icon(iconName)),
+    h('span', { class: 'stat-value' }, String(value)),
+    h('span', { class: 'stat-label' }, label));
+}
+
+function overviewStats() {
+  const today = new Date().toISOString().slice(0, 10);
+  const openTasks = state.tables.Tugasan.filter((task) => task.siap !== 'ya');
+  const dueTasks = openTasks.filter((task) => task.tarikh_akhir && task.tarikh_akhir <= today).length;
+  const videos = state.items.filter((item) => item.type === 'link' && item.status !== 'dilihat' && parseVideo(item.url)).length;
+  const learning = state.tables.Kelas.filter((kelas) => kelas.status !== 'siap').length;
+  return h('div', { class: 'stats' },
+    statTile('tasks', 'tasks', openTasks.length, dueTasks ? dueTasks + ' perlu disiapkan' : 'Tugasan belum siap'),
+    statTile('board', 'board', state.tables.Kad.length, 'Kad di papan'),
+    statTile('classes', 'class', learning, 'Kelas belum siap'),
+    statTile('watch', 'watch', videos, 'Video belum ditonton'));
+}
+
 function noteCard(item) {
   const [firstImage] = idList(item.gambar);
   const images = idList(item.gambar).length;
-  return h('button', { class: 'note', type: 'button', onclick: () => openItem(item.id) },
+  return h('button', { class: 'note note-c' + noteColour(item.id), type: 'button', onclick: () => openItem(item.id) },
     firstImage && imageHolder(firstImage, 'card-image'),
     item.title && h('span', { class: 'note-title' }, item.title),
     item.text && h('span', { class: 'note-text' }, item.text),
@@ -143,6 +174,8 @@ export function renderLibrary(key) {
   const queued = pendingEntries(view.filter);
   const items = state.items.filter(view.filter).sort(newestFirst);
   const children = [];
+
+  if (key === 'inbox' && isConfigured()) children.push(overviewStats());
 
   if (key === 'info') {
     children.push(h('div', { class: 'page-head' },

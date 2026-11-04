@@ -152,7 +152,31 @@ export function field(label, control, hint) {
 }
 
 export function emptyState(title, text, action) {
-  return h('div', { class: 'empty' }, h('h2', {}, title), h('p', {}, text), action);
+  return h('div', { class: 'empty' },
+    h('span', { class: 'empty-icon' }, icon(document.body.dataset.icon || 'inbox')),
+    h('h2', {}, title),
+    h('p', {}, text),
+    action);
+}
+
+const CONFETTI_COLOURS = ['#d9432f', '#f59e0b', '#15803d', '#2563eb', '#db2777', '#7c3aed'];
+
+/** Letupan kecil bila sesuatu selesai. */
+export function celebrate(originX = window.innerWidth / 2, originY = window.innerHeight / 3) {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  for (let i = 0; i < 18; i++) {
+    const angle = (i / 18) * Math.PI * 2;
+    const distance = 70 + Math.random() * 90;
+    const piece = h('span', { class: 'confetti' });
+    piece.style.left = originX + 'px';
+    piece.style.top = originY + 'px';
+    piece.style.background = CONFETTI_COLOURS[i % CONFETTI_COLOURS.length];
+    piece.style.setProperty('--x', Math.cos(angle) * distance + 'px');
+    piece.style.setProperty('--y', Math.sin(angle) * distance + 40 + 'px');
+    piece.style.setProperty('--r', Math.random() * 540 + 'deg');
+    piece.addEventListener('animationend', () => piece.remove());
+    document.body.append(piece);
+  }
 }
 
 export async function copyText(text, doneMessage) {

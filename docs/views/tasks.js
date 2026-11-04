@@ -1,6 +1,6 @@
 // Senarai tugasan, dikumpul ikut tarikh.
 import { deleteRecord, idList, newId, state, writeRecord } from '../lib/data.js';
-import { askConfirm, emptyState, field, h, icon, openSheet, toast } from '../lib/dom.js';
+import { askConfirm, celebrate, emptyState, field, h, icon, openSheet, toast } from '../lib/dom.js';
 import { attachmentEditor, deleteAttachments } from '../lib/images.js';
 
 let showDone = false;
@@ -32,9 +32,17 @@ function taskRow(task) {
       checked: done,
       'aria-label': (done ? 'Tanda belum siap: ' : 'Tanda siap: ') + task.tajuk,
       onchange: (event) => {
-        // Lepaskan fokus supaya senarai boleh disusun semula serta-merta.
+        const checked = event.target.checked;
+        const box = event.target.getBoundingClientRect();
+        // Lepaskan fokus supaya senarai boleh disusun semula selepas animasi.
         event.target.blur();
-        writeRecord('Tugasan', { id: task.id, siap: event.target.checked ? 'ya' : '' });
+        event.target.closest('.task').classList.toggle('just-done', checked);
+        const remaining = state.tables.Tugasan.filter((other) => other.siap !== 'ya' && other.id !== task.id).length;
+        if (checked && !remaining) {
+          celebrate(box.left + box.width / 2, box.top);
+          toast('Semua tugasan dah siap');
+        }
+        setTimeout(() => writeRecord('Tugasan', { id: task.id, siap: checked ? 'ya' : '' }), 280);
       }
     }),
     h('button', { class: 'task-main', type: 'button', onclick: () => openTask(task.id) },
@@ -49,8 +57,31 @@ function group(label, tasks, className = '') {
   if (!tasks.length) return null;
   return [
     h('h2', { class: 'section-label ' + className }, label, h('span', { class: 'count' }, String(tasks.length))),
-    h('div', {}, tasks.map(taskRow))
+    h('div', { class: 'task-list' }, tasks.map(taskRow))
   ];
+}
+
+let shownPercent = 0;
+
+function progressCard(done, total) {
+  const percent = total ? Math.round((done / total) * 100) : 0;
+  const fill = h('div', { class: 'progress-fill' });
+  // Mula dari nilai lama, supaya bar bergerak bila tugasan ditanda.
+  fill.style.width = shownPercent + '%';
+  requestAnimationFrame(() => requestAnimationFrame(() => { fill.style.width = percent + '%'; }));
+  shownPercent = percent;
+  return h('div', { class: 'progress-card' },
+    h('div', { class: 'progress-text' },
+      h('span', { class: 'progress-value' }, percent + '%'),
+      h('span', { class: 'progress-label' }, done + ' daripada ' + total + ' siap')),
+    h('div', {
+      class: 'progress-track',
+      role: 'progressbar',
+      'aria-valuenow': String(percent),
+      'aria-valuemin': '0',
+      'aria-valuemax': '100',
+      'aria-label': 'Kemajuan tugasan'
+    }, fill));
 }
 
 export function renderTasks() {
@@ -79,7 +110,9 @@ export function renderTasks() {
     }
   }, titleInput, dateInput, h('button', { class: 'button', type: 'submit' }, 'Tambah'));
 
-  return h('div', { class: 'page' }, form,
+  return h('div', { class: 'page' },
+    state.tables.Tugasan.length > 0 && progressCard(done.length, state.tables.Tugasan.length),
+    form,
     !open.length && !done.length && emptyState('Tiada tugasan', 'Tulis tugasan pertama kau di atas.'),
     !open.length && done.length > 0 && emptyState('Semua dah siap', 'Tiada tugasan tertunggak.'),
     group('Lewat', open.filter((task) => task.tarikh_akhir && task.tarikh_akhir < today).sort(byDue), 'signal'),
@@ -87,7 +120,7 @@ export function renderTasks() {
     group('Akan datang', open.filter((task) => task.tarikh_akhir > today).sort(byDue)),
     group('Tiada tarikh', open.filter((task) => !task.tarikh_akhir).sort(newest)),
     done.length > 0 && h('button', {
-      class: 'button plain',
+      class: 'button plain done-toggle',
       type: 'button',
       onclick: (event) => {
         showDone = !showDone;

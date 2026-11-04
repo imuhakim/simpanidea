@@ -94,13 +94,17 @@ function startDrag(element, card, startX, startY) {
   let frame = 0;
 
   function placeGhost() {
-    ghost.style.transform = `translate(${pointerX - offsetX}px, ${pointerY - offsetY}px) rotate(1.2deg)`;
+    ghost.style.transform = `translate(${pointerX - offsetX}px, ${pointerY - offsetY}px) rotate(2.5deg) scale(1.03)`;
   }
 
   function placeCard() {
     const under = document.elementFromPoint(pointerX, pointerY);
     const column = under && under.closest('.board-column');
     if (!column || !column.dataset.column) return;
+    board.querySelectorAll('.board-column.over').forEach((other) => {
+      if (other !== column) other.classList.remove('over');
+    });
+    column.classList.add('over');
     const list = column.querySelector('.column-cards');
     const siblings = [...list.querySelectorAll('.card')].filter((other) => other !== element);
     const next = siblings.find((other) => {
@@ -131,6 +135,7 @@ function startDrag(element, card, startX, startY) {
 
   function finish() {
     cancelAnimationFrame(frame);
+    board.querySelectorAll('.board-column.over').forEach((column) => column.classList.remove('over'));
     ghost.remove();
     element.classList.remove('placeholder');
     document.body.classList.remove('is-dragging');
@@ -198,13 +203,15 @@ function cardElement(card) {
   return element;
 }
 
-function columnElement(column) {
+const COLUMN_COLOURS = ['#2563eb', '#d97706', '#15803d', '#7c3aed', '#db2777', '#0f766e'];
+
+function columnElement(column, index) {
   const cards = cardsIn(column.id);
   const input = h('input', {
     class: 'input', type: 'text', placeholder: 'Tambah kad', 'aria-label': 'Tambah kad ke ' + column.tajuk,
     'data-keep-focus': 'kad-' + column.id
   });
-  return h('section', { class: 'board-column', 'data-column': column.id, 'aria-label': column.tajuk },
+  const element = h('section', { class: 'board-column', 'data-column': column.id, 'aria-label': column.tajuk },
     h('header', { class: 'column-head' },
       h('h2', { class: 'column-title' }, column.tajuk),
       h('span', { class: 'column-count' }, String(cards.length)),
@@ -230,6 +237,8 @@ function columnElement(column) {
         });
       }
     }, input));
+  element.style.setProperty('--column', COLUMN_COLOURS[index % COLUMN_COLOURS.length]);
+  return element;
 }
 
 async function addColumn() {

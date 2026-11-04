@@ -46,9 +46,11 @@ function renderNav() {
     return h('a', {
       class: className,
       href: '#' + key,
+      'data-tone': key,
       'aria-current': state.view === key ? 'page' : false
-    }, icon(view.icon),
-    className === 'tab' ? view.title : [
+    },
+    className === 'tab' ? [h('span', { class: 'tab-icon' }, icon(view.icon)), view.title] : [
+      h('span', { class: 'nav-icon' }, icon(view.icon)),
       h('span', { class: 'nav-label' }, view.title),
       count ? h('span', { class: 'nav-count' + (key === 'inbox' ? ' signal' : '') }, String(count)) : null
     ]);
@@ -75,9 +77,34 @@ function syncStatus() {
   return '';
 }
 
+function viewSummary(key) {
+  const counted = (total, label) => (total ? total + ' ' + label : '');
+  if (key === 'inbox') return countFor('inbox') ? countFor('inbox') + ' menunggu dilihat' : 'Semua dah dilihat';
+  if (key === 'tasks') return countFor('tasks') ? countFor('tasks') + ' belum siap' : 'Tiada yang tertunggak';
+  if (key === 'board') return counted(state.tables.Kad.length, 'kad') || 'Susun kerja kau';
+  if (key === 'classes') return counted(state.tables.Kelas.length, 'kelas') || 'Link, akaun dan password';
+  if (key === 'watch') return 'YouTube, TikTok dan Facebook';
+  if (key === 'settings') return 'Sambungan dan kunci app';
+  const filter = LIBRARY_VIEWS[key] && LIBRARY_VIEWS[key].filter;
+  return filter ? counted(state.items.filter(filter).length, 'item') : '';
+}
+
+let shownIcon = '';
+
 function renderChrome() {
   renderNav();
-  $('view-title').textContent = state.query.trim() ? 'Carian' : VIEWS[state.view].title;
+  const searching = Boolean(state.query.trim());
+  const tone = searching ? 'all' : state.view;
+  const iconName = searching ? 'search' : VIEWS[state.view].icon;
+  document.body.dataset.tone = tone;
+  document.body.dataset.icon = iconName;
+  if (shownIcon !== iconName) {
+    shownIcon = iconName;
+    // Elemen baru supaya animasi ikon berulang setiap kali bertukar halaman.
+    $('view-icon').replaceWith(h('span', { id: 'view-icon', class: 'view-icon' }, icon(iconName)));
+  }
+  $('view-title').textContent = searching ? 'Carian' : VIEWS[state.view].title;
+  $('view-sub').textContent = searching ? 'Merentas semua fungsi' : viewSummary(state.view);
   $('sync-status').replaceChildren(syncStatus());
   $('refresh').classList.toggle('spinning', state.refreshing || state.sending);
   $('lock-now').hidden = !isPinEnabled();
@@ -154,6 +181,19 @@ function route() {
   $('main').replaceChildren();
   drawMain();
   window.scrollTo(0, 0);
+  playEntrance();
+}
+
+let entranceTimer = null;
+
+/** Item masuk berperingkat hanya bila bertukar halaman, bukan setiap kali data dikemas kini. */
+function playEntrance() {
+  const main = $('main');
+  main.classList.remove('animate');
+  void main.offsetWidth;
+  main.classList.add('animate');
+  clearTimeout(entranceTimer);
+  entranceTimer = setTimeout(() => main.classList.remove('animate'), 700);
 }
 
 function openMenu() {

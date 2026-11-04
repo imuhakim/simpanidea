@@ -110,9 +110,10 @@ function videoRow({ entry, video }) {
       'aria-label': 'Tonton ' + titleOf(entry),
       onclick: () => play(entry, video)
     },
-    h('span', { class: 'video-thumb' },
+    h('span', { class: 'video-thumb ' + video.platform },
       PLATFORM_LABEL[video.platform],
-      video.thumbnail && h('img', { src: video.thumbnail, alt: '', loading: 'lazy', onerror: (event) => event.target.remove() })),
+      video.thumbnail && h('img', { src: video.thumbnail, alt: '', loading: 'lazy', onerror: (event) => event.target.remove() }),
+      h('span', { class: 'video-play' }, icon('play'))),
     h('span', { class: 'row-text' },
       h('span', { class: 'row-title' }, titleOf(entry)),
       h('span', { class: 'row-sub' }, PLATFORM_LABEL[video.platform] + ' · ' + formatDate(entry.createdAt))),
@@ -171,7 +172,7 @@ export function renderWatch() {
     }
   }, input, h('button', { class: 'button', type: 'submit' }, 'Tambah'));
 
-  stage = h('div', { class: 'stage' }, h('div', { class: 'stage-screen' }, 'Pilih video untuk mula menonton.'));
+  stage = h('div', { class: 'stage' }, h('div', { class: 'stage-screen' }, icon('play'), 'Pilih video untuk mula menonton'));
   list = h('div', {});
   const page = h('div', { class: 'watch' }, stage, h('aside', { class: 'watch-side', 'aria-label': 'Senarai video' }, form, list));
   drawList();
