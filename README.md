@@ -82,6 +82,15 @@ SimpanIdea mungkin ambil beberapa minit untuk muncul dalam senarai Share selepas
 - App mengunci semula selepas 15 minit, atau bila kau tekan **Kunci password**.
 - Status kelas dan tarikh terakhir dibuka hanya direkod kalau kau buka kelas melalui butang **Buka** dalam app.
 
+## Share dari iPhone
+
+iPhone tak benarkan web app masuk senarai Share, jadi 2 Shortcut kecil menggantikannya. Langkah penuh ada di **Tetapan → Share dari iPhone**, dengan butang untuk menyalin URL dan kunci rahsia.
+
+- **Simpan Gambar:** menerima gambar dari Photos, termasuk banyak gambar sekali gus.
+- **Simpan Link:** menerima link dan teks dari Safari dan app lain.
+
+Kunci rahsia ada di dalam Shortcut tu, jadi jangan kongsi Shortcut dengan sesiapa. Kalau terdedah, jalankan `rotateSecret`, dan kemas kini app serta kedua-dua Shortcut.
+
 ## Pindah, Arkib dan Sampah
 
 - **Pindah:** buka rekod dan tekan **Pindah** untuk alihkan antara Nota, Info Penting, Tugasan dan Papan. Teks dan gambar ikut sekali.

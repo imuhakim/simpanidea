@@ -406,6 +406,43 @@ test('aiChat menolak tanpa kunci, mesej kosong dan kunci rahsia salah', () => {
   assert.equal(harness.state.requests.length, 0);
 });
 
+test('quickSave menyimpan gambar mengikut jenis fail sebenar', () => {
+  const { harness, call, list } = ready();
+  const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]).toString('base64');
+  const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 1, 2]).toString('base64');
+  assert.equal(call({ action: 'quickSave', image: jpeg }).ok, true);
+  assert.equal(call({ action: 'quickSave', image: png.replace(/(.{4})/, '$1\n') }).ok, true);
+  assert.deepEqual(harness.state.files.map((file) => file.blob.mimeType), ['image/jpeg', 'image/png']);
+  const rows = list().Item;
+  assert.equal(rows.length, 2);
+  assert.notEqual(rows[0].id, rows[1].id);
+  assert.equal(rows[0].jenis, 'image');
+  assert.equal(rows[0].ruang, '');
+  assert.equal(rows[0].status, 'baru');
+});
+
+test('quickSave mengenal link dan nota dari teks', () => {
+  const { call, list } = ready();
+  call({ action: 'quickSave', text: 'https://contoh.my/a' });
+  call({ action: 'quickSave', text: 'Tengok ni https://youtu.be/abc best' });
+  call({ action: 'quickSave', text: '  Idea jual kopi  ' });
+  const [first, second, third] = list().Item;
+  assert.deepEqual([first.jenis, first.url, first.nota], ['link', 'https://contoh.my/a', '']);
+  assert.deepEqual([second.jenis, second.url, second.nota], ['link', 'https://youtu.be/abc', 'Tengok ni https://youtu.be/abc best']);
+  assert.deepEqual([third.jenis, third.nota], ['note', 'Idea jual kopi']);
+});
+
+test('quickSave menolak kandungan tak sah dan kunci salah', () => {
+  const { harness, call, list } = ready();
+  const html = Buffer.from('<html>').toString('base64');
+  assert.equal(call({ action: 'quickSave', image: html }).ok, false);
+  assert.equal(call({ action: 'quickSave' }).ok, false);
+  assert.equal(call({ action: 'quickSave', text: '   ' }).ok, false);
+  assert.equal(harness.post(JSON.stringify({ secret: 'salah', action: 'quickSave', text: 'x' })).code, 'unauthorized');
+  assert.equal(list().Item.length, 0);
+  assert.equal(harness.state.files.length, 0);
+});
+
 test('rotateSecret membatalkan kunci lama', () => {
   const { harness, secret, call } = ready();
   harness.rotateSecret();

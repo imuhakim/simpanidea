@@ -1,6 +1,6 @@
 // Tetapan: sambungan Google, pemasangan app dan perubahan yang gagal dihantar.
 import { isAllowedBackend, loadQueue, loadSettings, processQueue, refresh, render, saveSettings, state } from '../lib/data.js';
-import { field, h, toast } from '../lib/dom.js';
+import { copyText, field, h, icon, toast } from '../lib/dom.js';
 import { renderLockSettings } from './lock.js';
 import { renderAiSettings } from './ai.js';
 
@@ -32,6 +32,55 @@ function failedRow(entry) {
           render();
         }
       }, 'Buang')));
+}
+
+function shortcutStep(text) {
+  return h('li', {}, text);
+}
+
+/** Panduan Apple Shortcuts, kerana iPhone tak benarkan web app masuk senarai Share. */
+function renderShortcutGuide() {
+  const copyButton = (label, read, done) => h('button', {
+    class: 'button',
+    type: 'button',
+    onclick: () => {
+      const value = read();
+      if (value) copyText(value, done);
+      else toast('Isi sambungan Google dulu', true);
+    }
+  }, icon('copy'), label);
+
+  return h('section', {},
+    h('h2', {}, 'Share dari iPhone'),
+    h('p', { class: 'field-hint section-hint' },
+      'iPhone tak benarkan web app masuk senarai Share. Bina 2 Shortcut kecil ni untuk menggantikannya. Android tak perlukan ini.'),
+    h('div', { class: 'button-row shortcut-copy' },
+      copyButton('Salin URL', () => loadSettings().url, 'URL disalin'),
+      copyButton('Salin kunci', () => loadSettings().secret, 'Kunci rahsia disalin')),
+    h('details', { class: 'shortcut-guide' },
+      h('summary', {}, 'Shortcut 1: Simpan Gambar'),
+      h('ol', {},
+        shortcutStep('Buka app Shortcuts, tekan +, dan namakan Simpan Gambar.'),
+        shortcutStep('Tekan ikon (i) atau menu tetapan, hidupkan Show in Share Sheet, dan pilih Images sahaja.'),
+        shortcutStep('Tambah Repeat with Each, untuk Shortcut Input.'),
+        shortcutStep('Di dalam Repeat, tambah Resize Image: Longest Edge, 2000.'),
+        shortcutStep('Tambah Convert Image: JPEG, kualiti 80%.'),
+        shortcutStep('Tambah Base64 Encode, dengan Line Breaks: None.'),
+        shortcutStep('Tambah Get Contents of URL, dan tampal URL Web App.'),
+        shortcutStep('Tekan Show More: Method POST, Request Body JSON.'),
+        shortcutStep('Tambah 3 medan teks: secret (tampal kunci rahsia), action (tulis quickSave), image (pilih Base64 Encoded).'),
+        shortcutStep('Selepas End Repeat, tambah Show Notification: Disimpan.'))),
+    h('details', { class: 'shortcut-guide' },
+      h('summary', {}, 'Shortcut 2: Simpan Link'),
+      h('ol', {},
+        shortcutStep('Cipta Shortcut baru bernama Simpan Link.'),
+        shortcutStep('Hidupkan Show in Share Sheet, dan pilih URLs dan Text sahaja.'),
+        shortcutStep('Tambah Get Contents of URL, dan tampal URL Web App.'),
+        shortcutStep('Tekan Show More: Method POST, Request Body JSON.'),
+        shortcutStep('Tambah 3 medan teks: secret (tampal kunci rahsia), action (tulis quickSave), text (pilih Shortcut Input).'),
+        shortcutStep('Tambah Show Notification: Disimpan.'))),
+    h('p', { class: 'field-hint' },
+      'Selepas siap, Share dari Photos atau Safari dan pilih Shortcut tu. Jangan kongsi Shortcut ni dengan sesiapa, sebab kunci rahsia ada di dalamnya.'));
 }
 
 export function updateSettings() {
@@ -91,6 +140,7 @@ export function renderSettings() {
 
   const page = h('div', { class: 'settings' },
     h('section', {}, h('h2', {}, 'Sambungan Google'), form),
+    renderShortcutGuide(),
     renderAiSettings(),
     renderLockSettings(),
     h('section', { id: 'failed-box', hidden: true },

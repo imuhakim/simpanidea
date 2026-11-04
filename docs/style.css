@@ -1254,3 +1254,12 @@ dialog::backdrop { background: var(--overlay); backdrop-filter: blur(3px); anima
 .ai-sheet .sheet-body > .ai-panel-body { height: 100%; }
 .ai-setup-inline ol { margin: 0 0 14px; padding-left: 20px; color: var(--ink-2); }
 .ai-setup-inline a { color: var(--tone-fg); font-weight: 600; }
+
+/* Panduan Shortcut */
+.shortcut-copy { margin-bottom: 12px; }
+.shortcut-guide { margin-bottom: 8px; border: 1px solid var(--line); border-radius: 12px; }
+.shortcut-guide summary { padding: 10px 12px; font-weight: 620; cursor: pointer; border-radius: 12px; transition: background .16s; }
+.shortcut-guide summary:hover { background: var(--tone-softer); }
+.shortcut-guide ol { margin: 0; padding: 0 14px 12px 32px; color: var(--ink-2); }
+.shortcut-guide li { margin-top: 5px; }
+.shortcut-guide[open] { animation: fade .2s ease; }

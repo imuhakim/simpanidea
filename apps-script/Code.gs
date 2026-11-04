@@ -118,6 +118,7 @@ function doPost(e) {
       case 'ping': return jsonResponse_({ ok: true, app: 'SimpanIdea' });
       case 'listAll': return jsonResponse_(listAll_());
       case 'saveItem': return jsonResponse_(saveItem_(request.item));
+      case 'quickSave': return jsonResponse_(quickSave_(request));
       case 'getImage': return jsonResponse_(getImage_(request.id));
       case 'saveRecord': return jsonResponse_(saveRecord_(request.table, request.record));
       case 'deleteRecord': return jsonResponse_(deleteRecord_(request.table, request.id));
@@ -242,6 +243,37 @@ function saveItem_(item) {
   } finally {
     lock.releaseLock();
   }
+}
+
+/** Untuk Apple Shortcuts: cukup hantar gambar atau teks, dan selebihnya ditentukan di sini. */
+function quickSave_(request) {
+  var id = Utilities.getUuid();
+  var image = String(request.image || '').replace(/\s/g, '');
+  if (image) {
+    var mimeType = imageTypeFromBase64_(image);
+    if (!mimeType) throw new Error('Format gambar tidak disokong.');
+    return saveItem_({
+      id: id,
+      type: 'image',
+      title: 'Screenshot iPhone',
+      mimeType: mimeType,
+      dataBase64: image
+    });
+  }
+  var text = String(request.text || '').trim();
+  if (!text) throw new Error('Tiada apa untuk disimpan.');
+  var match = text.match(/https?:\/\/\S+/i);
+  if (match) {
+    return saveItem_({ id: id, type: 'link', url: match[0], text: text === match[0] ? '' : text });
+  }
+  return saveItem_({ id: id, type: 'note', text: text });
+}
+
+function imageTypeFromBase64_(base64) {
+  if (base64.indexOf('/9j/') === 0) return 'image/jpeg';
+  if (base64.indexOf('iVBOR') === 0) return 'image/png';
+  if (base64.indexOf('UklGR') === 0) return 'image/webp';
+  return '';
 }
 
 function saveRecord_(table, record) {
