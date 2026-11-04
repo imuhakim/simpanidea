@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://script.google.com https://script.googleusercontent.com; img-src 'self' blob:; object-src 'none'; base-uri 'none'">
+  <meta name="theme-color" content="#17433b">
+  <title>SimpanIdea</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>SimpanIdea</h1>
+    <p>Ujian butang Share</p>
+  </header>
+
+  <main>
+    <p id="notice" class="notice" role="status" hidden></p>
+
+    <section aria-labelledby="check-heading">
+      <h2 id="check-heading">Semakan</h2>
+      <ul class="checks">
+        <li id="check-sw">Service worker</li>
+        <li id="check-installed">Dipasang sebagai app</li>
+        <li id="check-backend">Sambungan ke Google</li>
+      </ul>
+      <button id="install" type="button" class="primary" hidden>Pasang app</button>
+    </section>
+
+    <section aria-labelledby="send-heading">
+      <h2 id="send-heading">Dalam barisan</h2>
+      <ul id="queue" class="items"></ul>
+      <p id="queue-empty" class="muted">Tiada item menunggu.</p>
+      <div class="actions">
+        <button id="send-now" type="button">Hantar sekarang</button>
+        <label class="button">
+          Pilih gambar
+          <input id="picker" type="file" accept="image/*" multiple hidden>
+        </label>
+      </div>
+    </section>
+
+    <section aria-labelledby="sent-heading">
+      <h2 id="sent-heading">Baru dihantar</h2>
+      <ul id="sent" class="items"></ul>
+      <p id="sent-empty" class="muted">Belum ada.</p>
+    </section>
+
+    <section aria-labelledby="settings-heading">
+      <h2 id="settings-heading">Tetapan</h2>
+      <form id="settings">
+        <label for="backend-url">URL Web App</label>
+        <input id="backend-url" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://script.google.com/macros/s/.../exec" required>
+        <label for="secret">Kunci rahsia</label>
+        <input id="secret" type="password" autocomplete="off" spellcheck="false" required>
+        <button type="submit" class="primary">Simpan dan uji</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="store.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
