@@ -10,6 +10,9 @@ App peribadi untuk simpan screenshot, link, nota, tugasan, kad kanban, kelas onl
 | **Papan** | Kanban dengan lajur yang boleh ditambah dan kad yang boleh diseret |
 | **Kelas** | Link, akaun, password disulitkan, dan rekod dah buka atau belum |
 | **Tonton** | Video YouTube, TikTok dan Facebook dimainkan terus dalam app |
+| **Tanya AI** | Tanya apa saja, atau minta AI huraikan screenshot dan rekod kau |
+| **Arkib** | Rekod yang keluar dari senarai harian, tapi kekal untuk dirujuk |
+| **Sampah** | Rekod yang dipadam, boleh dipulihkan dalam 30 hari |
 
 ## Isi projek
 
@@ -78,6 +81,31 @@ SimpanIdea mungkin ambil beberapa minit untuk muncul dalam senarai Share selepas
 - Kata laluan induk tak disimpan di mana-mana. **Kalau lupa, password yang tersimpan tak boleh dipulihkan.**
 - App mengunci semula selepas 15 minit, atau bila kau tekan **Kunci password**.
 - Status kelas dan tarikh terakhir dibuka hanya direkod kalau kau buka kelas melalui butang **Buka** dalam app.
+
+## Pindah, Arkib dan Sampah
+
+- **Pindah:** buka rekod dan tekan **Pindah** untuk alihkan antara Nota, Info Penting, Tugasan dan Papan. Teks dan gambar ikut sekali.
+- **Arkib:** rekod keluar dari senarai harian dan tinggal di **Arkib**, dan masih boleh dicari. Tekan **Keluarkan** untuk pulangkan.
+- **Padam:** rekod masuk **Sampah**, dan boleh dipulihkan selama 30 hari. Selepas itu ia dibuang kekal bila app dibuka.
+- **Padam kekal:** gambar dialih ke tong sampah Google Drive, dan rekod dibuang dari Sheet.
+
+## Tanya AI
+
+Tekan **Tanya AI** di bahagian atas, atau dalam mana-mana rekod. Dari screenshot, AI boleh tengok gambar tu dan menghuraikannya. Jawapan boleh disimpan sebagai nota, tugasan atau kad.
+
+Untuk mula, kau perlu kunci API sendiri:
+
+1. Buka <https://console.anthropic.com/settings/keys> dan log masuk.
+2. Tambah kredit. API dibayar berasingan daripada langganan Claude, dan elok letak had belanja.
+3. Cipta API key, dan tampal di **Tetapan → Tanya AI**.
+
+Yang perlu tahu:
+
+- **Kunci API:** disimpan dalam Script Properties di Apps Script kau, dan tak pernah dipulangkan kepada app.
+- **Data yang dihantar ke Anthropic:** bila **Guna simpanan aku** ditanda, tajuk, catatan dan link dihantar sekali. Gambar hanya dihantar bila kau bertanya dari rekod tersebut.
+- **Tak pernah dihantar:** password, username kelas, kunci rahsia, dan rekod dalam Sampah.
+- **Kos:** setiap jawapan tunjuk jumlah token. Opus 5.5 ialah lalai dan paling mahal, manakala Haiku 5.5 paling murah. Tukar di bawah kotak soalan.
+- **Had:** soalan melalui Apps Script, jadi jawapan muncul sekali gus dan jawapan panjang boleh dipotong. AI tak boleh mengubah data sendiri, dan tak boleh membuka link.
 
 ## Kunci PIN
 

@@ -7,7 +7,7 @@ const vm = require('node:vm');
 function createHarness() {
   const state = {
     properties: {}, files: [], folders: [], sheets: {}, logs: [], locks: 0, ids: 0,
-    redirects: {}, fetched: []
+    redirects: {}, fetched: [], requests: [], anthropic: null
   };
   const nextId = (prefix) => `${prefix}-${++state.ids}`;
 
@@ -112,7 +112,8 @@ function createHarness() {
     PropertiesService: {
       getScriptProperties: () => ({
         getProperty: (key) => (key in state.properties ? state.properties[key] : null),
-        setProperty: (key, value) => { state.properties[key] = value; }
+        setProperty: (key, value) => { state.properties[key] = value; },
+        deleteProperty: (key) => { delete state.properties[key]; }
       })
     },
     DriveApp: {
@@ -144,8 +145,15 @@ function createHarness() {
       })
     },
     UrlFetchApp: {
-      fetch(url) {
+      fetch(url, options = {}) {
         state.fetched.push(url);
+        if (url.startsWith('https://api.anthropic.com/')) {
+          state.requests.push({ url, options, body: options.payload ? JSON.parse(options.payload) : null });
+          const reply = state.anthropic
+            ? state.anthropic(url, options)
+            : { code: 200, body: { stop_reason: 'end_turn', model: 'claude-opus-5-5', content: [{ type: 'text', text: 'Jawapan tiruan' }], usage: { input_tokens: 10, output_tokens: 5 } } };
+          return { getResponseCode: () => reply.code, getContentText: () => JSON.stringify(reply.body), getHeaders: () => ({}) };
+        }
         const location = state.redirects[url];
         return {
           getResponseCode: () => (location ? 302 : 200),

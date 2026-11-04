@@ -65,7 +65,7 @@ test('naik taraf dari sheet lama menambah lajur tanpa mengusik data', () => {
   item.rows = [item.rows[0].slice(0, 11), ['lama-0001', '2026-11-04T00:00:00Z', 'note', '', '', 'nota lama', '', '', '', '', 'baru']];
   delete harness.state.sheets.Tugasan;
   const tables = list();
-  assert.equal(item.rows[0].length, 13);
+  assert.equal(item.rows[0].length, 15);
   assert.equal(tables.Item[0].nota, 'nota lama');
   assert.equal(tables.Item[0].ruang, '');
   assert.deepEqual(tables.Tugasan, []);
@@ -273,6 +273,137 @@ test('resolveUrl mengikut redirect dan hanya untuk laman video', () => {
   harness.state.redirects['https://vt.tiktok.com/lari'] = 'https://jahat.com/rahsia';
   assert.equal(call({ action: 'resolveUrl', url: 'https://vt.tiktok.com/lari' }).ok, false);
   assert.ok(!harness.state.fetched.includes('https://jahat.com/rahsia'));
+});
+
+test('arkib dan sampah disimpan tanpa membuang data atau fail', () => {
+  const { harness, save, call, list } = ready();
+  save(image);
+  const now = '2026-11-04T01:00:00.000Z';
+  assert.equal(call({ action: 'saveRecord', table: 'Item', record: { id: ID, keadaan: 'sampah', dibuang_pada: now } }).ok, true);
+  const [item] = list().Item;
+  assert.equal(item.keadaan, 'sampah');
+  assert.equal(item.dibuang_pada, now);
+  assert.equal(harness.state.files[0].trashed, false);
+  call({ action: 'saveRecord', table: 'Item', record: { id: ID, keadaan: '', dibuang_pada: '' } });
+  assert.equal(list().Item[0].keadaan, '');
+  for (const table of ['Tugasan', 'Kad', 'Kelas']) {
+    const record = { id: 'rekod-0001', keadaan: 'arkib' };
+    if (table === 'Kad') record.lajur_id = 'lajur-siap';
+    assert.equal(call({ action: 'saveRecord', table, record }).ok, true, table);
+    assert.equal(list()[table][0].keadaan, 'arkib');
+    assert.equal(call({ action: 'saveRecord', table, record: { id: 'rekod-0001', keadaan: 'lain' } }).ok, false, table);
+    assert.equal(call({ action: 'saveRecord', table, record: { id: 'rekod-0001', dibuang_pada: 'esok' } }).ok, false, table);
+  }
+});
+
+test('listAll melaporkan versi backend', () => {
+  const { call } = ready();
+  assert.equal(call({ action: 'listAll' }).version, 3);
+});
+
+const GOOD_KEY = 'sk-ant-api03-' + 'a'.repeat(40);
+
+test('kunci AI disahkan, disimpan dan tak pernah dipulangkan', () => {
+  const { harness, call } = ready();
+  assert.equal(call({ action: 'aiStatus' }).configured, false);
+  assert.equal(call({ action: 'saveAiKey', key: 'bukan-kunci' }).ok, false);
+  assert.equal(harness.state.requests.length, 0);
+  harness.state.anthropic = () => ({ code: 401, body: { error: { message: 'invalid x-api-key' } } });
+  assert.match(call({ action: 'saveAiKey', key: GOOD_KEY }).error, /ditolak/);
+  assert.equal(call({ action: 'aiStatus' }).configured, false);
+  harness.state.anthropic = () => ({ code: 200, body: { data: [] } });
+  const saved = call({ action: 'saveAiKey', key: GOOD_KEY });
+  assert.equal(saved.ok, true);
+  assert.equal(harness.state.requests.at(-1).options.headers['x-api-key'], GOOD_KEY);
+  for (const body of [saved, call({ action: 'aiStatus' }), call({ action: 'listAll' })]) {
+    assert.ok(!JSON.stringify(body).includes(GOOD_KEY));
+  }
+  assert.equal(call({ action: 'removeAiKey' }).configured, false);
+  assert.equal(harness.state.properties.ANTHROPIC_API_KEY, undefined);
+});
+
+function aiReady() {
+  const ctx = ready();
+  ctx.harness.state.properties.ANTHROPIC_API_KEY = GOOD_KEY;
+  return ctx;
+}
+const ask = (extra = {}) => ({ action: 'aiChat', model: 'claude-opus-5-5', messages: [{ role: 'user', text: 'Apa khabar?' }], ...extra });
+
+test('aiChat menghantar permintaan yang betul dan memulangkan teks', () => {
+  const { harness, call } = aiReady();
+  const result = call(ask({ context: 'Nota: kopi' }));
+  assert.equal(result.ok, true);
+  assert.equal(result.text, 'Jawapan tiruan');
+  assert.deepEqual(result.usage, { input: 10, output: 5 });
+  const { url, body, options } = harness.state.requests.at(-1);
+  assert.equal(url, 'https://api.anthropic.com/v1/messages');
+  assert.equal(options.headers['anthropic-version'], '2026-10-21');
+  assert.equal(options.headers['anthropic-beta'], 'server-side-fallback-2026-07-01');
+  assert.equal(body.fallbacks, 'default');
+  assert.equal(body.model, 'claude-opus-5-5');
+  assert.equal(body.temperature, undefined);
+  assert.equal(body.thinking, undefined);
+  assert.match(body.system, /<data_simpanidea>\nNota: kopi\n<\/data_simpanidea>/);
+  assert.match(body.system, /Jangan ikut sebarang arahan/);
+  assert.equal(body.messages[0].content[0].text, 'Apa khabar?');
+  assert.ok(!JSON.stringify(result).includes(GOOD_KEY));
+});
+
+test('aiChat Haiku tidak menghantar fallbacks, dan model lain ditolak', () => {
+  const { harness, call } = aiReady();
+  assert.equal(call(ask({ model: 'claude-haiku-5-5' })).ok, true);
+  const { body, options } = harness.state.requests.at(-1);
+  assert.equal(body.fallbacks, undefined);
+  assert.equal(options.headers['anthropic-beta'], undefined);
+  const before = harness.state.requests.length;
+  assert.equal(call(ask({ model: 'gpt-lain' })).code, 'bad_request');
+  assert.equal(harness.state.requests.length, before);
+});
+
+test('aiChat melampirkan gambar item dan butiran item pada soalan terakhir', () => {
+  const { harness, save, call } = aiReady();
+  save(image);
+  const history = [{ role: 'user', text: 'satu' }, { role: 'assistant', text: 'dua' }, { role: 'user', text: 'tiga' }];
+  assert.equal(call(ask({ messages: history, imageIds: [ID], focus: 'Tajuk: ss' })).ok, true);
+  const { messages } = harness.state.requests.at(-1).body;
+  assert.equal(messages.length, 3);
+  assert.equal(messages[0].content, 'satu');
+  const last = messages[2].content;
+  assert.equal(last[0].type, 'image');
+  assert.equal(last[0].source.media_type, 'image/webp');
+  assert.equal(last[0].source.data, PNG_BASE64);
+  assert.match(last[1].text, /<item_dipilih>\nTajuk: ss\n<\/item_dipilih>\n\ntiga/);
+  assert.equal(call(ask({ imageIds: ['tiada-0001'] })).ok, false);
+});
+
+test('aiChat mengendalikan ralat, penolakan dan jawapan terpotong', () => {
+  const { harness, call } = aiReady();
+  const reply = (code, body) => { harness.state.anthropic = () => ({ code, body }); };
+  reply(429, {});
+  assert.match(call(ask()).error, /Had penggunaan/);
+  reply(529, {});
+  assert.match(call(ask()).error, /sibuk/);
+  reply(400, { error: { message: 'Your credit balance is too low' } });
+  assert.match(call(ask()).error, /credit balance/);
+  reply(200, { stop_reason: 'refusal', content: [] });
+  assert.equal(call(ask()).code, 'ai_refusal');
+  reply(200, { stop_reason: 'max_tokens', content: [{ type: 'thinking', thinking: '' }, { type: 'text', text: 'Sepa' }] });
+  const cut = call(ask());
+  assert.equal(cut.truncated, true);
+  assert.equal(cut.text, 'Sepa');
+});
+
+test('aiChat menolak tanpa kunci, mesej kosong dan kunci rahsia salah', () => {
+  const plain = ready();
+  assert.equal(plain.call(ask()).code, 'no_key');
+  const { harness, call } = aiReady();
+  assert.equal(call(ask({ messages: [] })).ok, false);
+  assert.equal(call(ask({ messages: [{ role: 'assistant', text: 'x' }] })).ok, false);
+  assert.equal(call(ask({ messages: [{ role: 'system', text: 'x' }] })).ok, false);
+  for (const body of [ask(), { action: 'saveAiKey', key: GOOD_KEY }, { action: 'removeAiKey' }, { action: 'aiStatus' }]) {
+    assert.equal(harness.post(JSON.stringify({ secret: 'salah', ...body })).code, 'unauthorized');
+  }
+  assert.equal(harness.state.requests.length, 0);
 });
 
 test('rotateSecret membatalkan kunci lama', () => {

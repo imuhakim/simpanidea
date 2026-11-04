@@ -1,7 +1,9 @@
 // Papan kanban. Kad dialih dengan tetikus, atau tekan lama di skrin sentuh.
-import { deleteRecord, idList, newId, render, state, writeRecord } from '../lib/data.js';
+import { deleteRecord, findRecord, idList, newId, render, state, writeRecord } from '../lib/data.js';
 import { askConfirm, askText, field, h, icon, openModal, openSheet, toast } from '../lib/dom.js';
-import { attachmentEditor, deleteAttachments, imageHolder } from '../lib/images.js';
+import { attachmentEditor, imageHolder } from '../lib/images.js';
+import { manageButtons, trashRecord } from './manage.js';
+import { askAiButton } from './ai.js';
 
 const LONG_PRESS_MS = 220;
 const MOUSE_THRESHOLD = 4;
@@ -283,14 +285,11 @@ function manageColumn(id) {
           const cards = cardsIn(id);
           const yes = await askConfirm({
             title: 'Padam lajur "' + column.tajuk + '"?',
-            text: cards.length ? cards.length + ' kad di dalamnya juga akan dipadam.' : 'Lajur ini kosong.',
+            text: cards.length ? cards.length + ' kad di dalamnya akan dialih ke Sampah.' : 'Lajur ini kosong.',
             confirmLabel: 'Padam'
           });
           if (!yes) return;
-          cards.forEach((card) => {
-            deleteAttachments(card.gambar);
-            deleteRecord('Kad', card.id);
-          });
+          cards.forEach((card) => trashRecord('Kad', card.id));
           deleteRecord('Lajur', id);
           dialog.close();
         }
@@ -316,7 +315,7 @@ export function renderBoard() {
 }
 
 export function openCard(id) {
-  const card = state.tables.Kad.find((candidate) => candidate.id === id);
+  const card = findRecord('Kad', id);
   if (!card) return;
   const titleInput = h('input', { class: 'input', type: 'text', value: card.tajuk });
   const noteInput = h('textarea', { class: 'input', rows: 6, value: card.nota || '', placeholder: 'Butiran' });
@@ -331,23 +330,27 @@ export function openCard(id) {
     kicker: 'Kad',
     onClose: () => { if (!saved) attachments.discard(); },
     body: [
+      h('div', { class: 'sheet-actions' }, askAiButton(() => ({
+        label: titleInput.value,
+        text: 'Kad papan: ' + titleInput.value + '\nButiran: ' + noteInput.value,
+        imageIds: idList(attachments.value())
+      }))),
       field('Tajuk', titleInput),
       field('Lajur', columnSelect),
       field('Butiran', noteInput),
       h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Gambar'), attachments.element)
     ],
     actions: [
-      h('button', {
-        class: 'button plain',
-        type: 'button',
-        onclick: async () => {
-          if (!await askConfirm({ title: 'Padam kad ini?', text: card.tajuk, confirmLabel: 'Padam' })) return;
+      ...manageButtons({
+        table: 'Kad',
+        id: card.id,
+        read: () => ({ title: titleInput.value.trim(), text: noteInput.value, gambar: attachments.value() }),
+        done: () => {
           saved = true;
-          deleteAttachments(card.gambar);
-          deleteRecord('Kad', card.id);
+          attachments.commit();
           dialog.close();
         }
-      }, 'Padam'),
+      }),
       h('span', { class: 'foot-spacer' }),
       h('button', {
         class: 'button primary',

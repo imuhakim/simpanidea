@@ -1,8 +1,10 @@
 // Inbox, Semua, Screenshot, Link, Nota dan Info Penting.
-import { addItems, deleteRecord, idList, imageItem, patchItem, processQueue, isConfigured, state, render, loadQueue } from '../lib/data.js';
-import { askConfirm, domainOf, emptyState, field, formatDate, h, icon, isWebUrl, openSheet, toast } from '../lib/dom.js';
-import { attachmentEditor, deleteAttachments, imageHolder, imageUrlFor, openImage, photoButtons } from '../lib/images.js';
+import { addItems, findItem, idList, imageItem, patchItem, processQueue, isConfigured, state, render, loadQueue } from '../lib/data.js';
+import { domainOf, emptyState, field, formatDate, h, icon, isWebUrl, openSheet, toast } from '../lib/dom.js';
+import { attachmentEditor, imageHolder, imageUrlFor, openImage, photoButtons } from '../lib/images.js';
 import { parseVideo } from '../lib/video.js';
+import { archiveWithUndo, manageButtons } from './manage.js';
+import { askAiButton } from './ai.js';
 
 const notAttachment = (item) => item.ruang !== 'lampiran';
 const TYPE_LABEL = { image: 'Gambar', link: 'Link', note: 'Nota' };
@@ -78,6 +80,13 @@ export function itemRow(item, { markable = false, showUnread = false } = {}) {
       showUnread && item.status !== 'dilihat' && h('span', { class: 'unread', title: 'Belum dilihat' }),
       h('span', { class: 'row-date' }, formatDate(item.createdAt))),
     markable && h('div', { class: 'row-side' },
+      h('button', {
+        class: 'icon-button',
+        type: 'button',
+        'aria-label': 'Arkibkan: ' + displayTitle(item),
+        title: 'Arkibkan',
+        onclick: () => archiveWithUndo('Item', item.id)
+      }, icon('archive')),
       h('button', {
         class: 'icon-button',
         type: 'button',
@@ -220,7 +229,7 @@ async function saveInfoPhotos(files) {
 }
 
 export function openItem(id) {
-  const item = state.items.find((candidate) => candidate.id === id);
+  const item = findItem(id);
   if (!item) return;
 
   const titleInput = h('input', { class: 'input', type: 'text', value: item.title, placeholder: 'Tiada tajuk' });
@@ -246,6 +255,12 @@ export function openItem(id) {
     body.push(h('a', { class: 'sheet-link', href: item.url, target: '_blank', rel: 'noopener noreferrer' }, item.url));
   }
   const quickActions = [
+    askAiButton(() => ({
+      label: displayTitle(item),
+      text: 'Jenis: ' + (TYPE_LABEL[item.type] || 'Item') + '\nTajuk: ' + titleInput.value +
+        '\nCatatan: ' + textInput.value + (item.url ? '\nLink: ' + item.url : ''),
+      imageIds: item.type === 'image' ? [item.id] : idList(attachments.value())
+    })),
     video && h('a', { class: 'button primary', href: '#watch', onclick: () => {
       state.watchTarget = item.id;
       dialog.close();
@@ -271,22 +286,16 @@ export function openItem(id) {
     body,
     onClose: () => { if (!saved) attachments.discard(); },
     actions: [
-      h('button', {
-        class: 'button plain',
-        type: 'button',
-        onclick: async () => {
-          const yes = await askConfirm({
-            title: 'Padam item ini?',
-            text: item.type === 'image' ? 'Gambarnya akan dialih ke tong sampah Google Drive.' : 'Item ini akan dibuang dari Sheet.',
-            confirmLabel: 'Padam'
-          });
-          if (!yes) return;
+      ...manageButtons({
+        table: 'Item',
+        id: item.id,
+        read: () => ({ title: titleInput.value.trim(), text: textInput.value, gambar: attachments.value() }),
+        done: () => {
           saved = true;
-          deleteAttachments(item.gambar);
-          deleteRecord('Item', item.id);
+          attachments.commit();
           dialog.close();
         }
-      }, 'Padam'),
+      }),
       h('span', { class: 'foot-spacer' }),
       h('button', {
         class: 'button primary',

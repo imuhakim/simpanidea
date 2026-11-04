@@ -1,7 +1,9 @@
 // Senarai tugasan, dikumpul ikut tarikh.
-import { deleteRecord, idList, newId, state, writeRecord } from '../lib/data.js';
-import { askConfirm, celebrate, emptyState, field, h, icon, openSheet, toast } from '../lib/dom.js';
-import { attachmentEditor, deleteAttachments } from '../lib/images.js';
+import { findRecord, idList, newId, state, writeRecord } from '../lib/data.js';
+import { celebrate, emptyState, field, h, icon, openSheet, toast } from '../lib/dom.js';
+import { attachmentEditor } from '../lib/images.js';
+import { manageButtons } from './manage.js';
+import { askAiButton } from './ai.js';
 
 let showDone = false;
 
@@ -132,7 +134,7 @@ export function renderTasks() {
 }
 
 export function openTask(id) {
-  const task = state.tables.Tugasan.find((candidate) => candidate.id === id);
+  const task = findRecord('Tugasan', id);
   if (!task) return;
   const titleInput = h('input', { class: 'input', type: 'text', value: task.tajuk });
   const noteInput = h('textarea', { class: 'input', rows: 5, value: task.nota || '', placeholder: 'Butiran' });
@@ -146,23 +148,27 @@ export function openTask(id) {
     kicker: 'Tugasan',
     onClose: () => { if (!saved) attachments.discard(); },
     body: [
+      h('div', { class: 'sheet-actions' }, askAiButton(() => ({
+        label: titleInput.value,
+        text: 'Tugasan: ' + titleInput.value + '\nTarikh akhir: ' + dateInput.value + '\nButiran: ' + noteInput.value,
+        imageIds: idList(attachments.value())
+      }))),
       field('Tugasan', titleInput),
       field('Tarikh akhir', dateInput),
       field('Butiran', noteInput),
       h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Gambar'), attachments.element)
     ],
     actions: [
-      h('button', {
-        class: 'button plain',
-        type: 'button',
-        onclick: async () => {
-          if (!await askConfirm({ title: 'Padam tugasan ini?', text: task.tajuk, confirmLabel: 'Padam' })) return;
+      ...manageButtons({
+        table: 'Tugasan',
+        id: task.id,
+        read: () => ({ title: titleInput.value.trim(), text: noteInput.value, gambar: attachments.value() }),
+        done: () => {
           saved = true;
-          deleteAttachments(task.gambar);
-          deleteRecord('Tugasan', task.id);
+          attachments.commit();
           dialog.close();
         }
-      }, 'Padam'),
+      }),
       h('span', { class: 'foot-spacer' }),
       h('button', {
         class: 'button primary',

@@ -1,7 +1,7 @@
 // Carian merentas semua fungsi. Password tidak pernah dicari.
-import { state } from '../lib/data.js';
+import { itemFromRow, recordsIn, state } from '../lib/data.js';
 import { emptyState, h, icon } from '../lib/dom.js';
-import { itemRow } from './library.js';
+import { displayTitle, itemRow, openItem } from './library.js';
 import { openTask } from './tasks.js';
 import { openCard } from './board.js';
 import { openClass } from './classes.js';
@@ -35,7 +35,12 @@ export function renderSearch() {
   const cards = state.tables.Kad.filter((card) => matches(card.tajuk, card.nota));
   const classes = state.tables.Kelas.filter((kelas) => matches(kelas.nama, kelas.url, kelas.nota, kelas.berhenti_di));
 
-  if (!items.length && !tasks.length && !cards.length && !classes.length) {
+  const openers = { Tugasan: openTask, Kad: openCard, Kelas: openClass, Item: openItem };
+  const archived = recordsIn('arkib').filter(({ record }) =>
+    matches(record.tajuk, record.nama, record.nota, record.url));
+  const archivedTitle = ({ table, record }) => (table === 'Item' ? displayTitle(itemFromRow(record)) : record.tajuk || record.nama);
+
+  if (!items.length && !tasks.length && !cards.length && !classes.length && !archived.length) {
     return h('div', { class: 'page' }, emptyState('Tiada hasil', 'Tiada apa-apa sepadan dengan "' + state.query.trim() + '".'));
   }
   const columnName = (id) => (state.tables.Lajur.find((column) => column.id === id) || {}).tajuk;
@@ -43,5 +48,6 @@ export function renderSearch() {
     section('Simpanan', items.map((item) => itemRow(item, { showUnread: true }))),
     section('Tugasan', tasks.map((task) => resultRow('tasks', task.tajuk, task.siap === 'ya' ? 'Siap' : task.nota, () => openTask(task.id)))),
     section('Papan', cards.map((card) => resultRow('board', card.tajuk, columnName(card.lajur_id), () => openCard(card.id)))),
-    section('Kelas', classes.map((kelas) => resultRow('class', kelas.nama, kelas.berhenti_di, () => openClass(kelas.id)))));
+    section('Kelas', classes.map((kelas) => resultRow('class', kelas.nama, kelas.berhenti_di, () => openClass(kelas.id)))),
+    section('Arkib', archived.map((entry) => resultRow('archive', archivedTitle(entry), 'Dalam arkib', () => openers[entry.table](entry.record.id)))));
 }

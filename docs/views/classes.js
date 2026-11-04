@@ -1,7 +1,9 @@
 // Kelas online: link, akaun, password disulitkan, dan rekod sama ada dah dibuka atau belum.
-import { deleteRecord, newId, state, writeRecord } from '../lib/data.js';
-import { askConfirm, copyText, domainOf, emptyState, field, formatRelative, h, icon, isWebUrl, openModal, openSheet, toast } from '../lib/dom.js';
-import { attachmentEditor, deleteAttachments } from '../lib/images.js';
+import { findRecord, idList, newId, state, writeRecord } from '../lib/data.js';
+import { copyText, domainOf, emptyState, field, formatRelative, h, icon, isWebUrl, openModal, openSheet, toast } from '../lib/dom.js';
+import { attachmentEditor } from '../lib/images.js';
+import { manageButtons } from './manage.js';
+import { askAiButton } from './ai.js';
 import { createVault, decrypt, encrypt, unlockVault } from '../lib/vault.js';
 
 const STATUS_LABEL = { belum: 'Belum buka', tengah: 'Tengah belajar', siap: 'Dah siap' };
@@ -266,7 +268,7 @@ function passwordField(kelas) {
 }
 
 export function openClass(id) {
-  const kelas = id ? state.tables.Kelas.find((candidate) => candidate.id === id) : null;
+  const kelas = id ? findRecord('Kelas', id) : null;
   if (id && !kelas) return;
 
   const nameInput = h('input', { class: 'input', type: 'text', value: kelas ? kelas.nama : '', placeholder: 'Contoh: Kelas Canva' });
@@ -285,6 +287,12 @@ export function openClass(id) {
   if (kelas) {
     body.push(h('div', { class: 'sheet-actions' },
       h('button', { class: 'button primary', type: 'button', onclick: () => launch(kelas) }, icon('open'), 'Buka kelas'),
+      // Password dan username sengaja tidak dihantar kepada AI.
+      askAiButton(() => ({
+        label: nameInput.value,
+        text: 'Kelas: ' + nameInput.value + '\nStatus: ' + STATUS_LABEL[status.value] + '\nBerhenti di: ' + stopInput.value + '\nCatatan: ' + noteInput.value,
+        imageIds: idList(attachments.value())
+      })),
       kelas.username && h('button', {
         class: 'button', type: 'button', onclick: () => copyText(kelas.username, 'Username disalin')
       }, icon('copy'), 'Salin username')));
@@ -340,17 +348,15 @@ export function openClass(id) {
     body,
     onClose: () => { if (!saved) attachments.discard(); },
     actions: [
-      kelas && h('button', {
-        class: 'button plain',
-        type: 'button',
-        onclick: async () => {
-          if (!await askConfirm({ title: 'Padam kelas ini?', text: 'Link, akaun dan password ' + kelas.nama + ' akan dibuang.', confirmLabel: 'Padam' })) return;
+      ...(kelas ? manageButtons({
+        table: 'Kelas',
+        id: kelas.id,
+        done: () => {
           saved = true;
-          deleteAttachments(kelas.gambar);
-          deleteRecord('Kelas', kelas.id);
+          attachments.commit();
           dialog.close();
         }
-      }, 'Padam'),
+      }) : []),
       h('span', { class: 'foot-spacer' }),
       h('button', { class: 'button primary', type: 'button', onclick: save }, 'Simpan')
     ]

@@ -1,4 +1,4 @@
-import { addItems, imageItem, itemFromText, isConfigured, loadLocalData, processQueue, refresh, render, setRenderer, state } from './lib/data.js';
+import { addItems, imageItem, itemFromText, isConfigured, loadLocalData, processQueue, recordsIn, refresh, render, setRenderer, state } from './lib/data.js';
 import { h, icon, toast } from './lib/dom.js';
 import { openComposer } from './views/compose.js';
 import { LIBRARY_VIEWS, renderLibrary } from './views/library.js';
@@ -10,6 +10,8 @@ import { renderWatch, updateWatch } from './views/watch.js';
 import { setInstallPrompt, renderSettings, updateSettings } from './views/settings.js';
 import { isLocked, isPinEnabled, lockNow, setLockHandlers, setupAutoLock } from './views/lock.js';
 import { lockVault } from './views/classes.js';
+import { renderArchive, renderTrash } from './views/archive.js';
+import { clearAiChat, openAi } from './views/ai.js';
 
 const VIEWS = {
   ...LIBRARY_VIEWS,
@@ -17,13 +19,15 @@ const VIEWS = {
   board: { title: 'Papan', icon: 'board', render: renderBoard },
   classes: { title: 'Kelas', icon: 'class', render: renderClasses },
   watch: { title: 'Tonton', icon: 'watch', render: renderWatch },
+  archive: { title: 'Arkib', icon: 'archive', render: renderArchive },
+  trash: { title: 'Sampah', icon: 'trash', render: renderTrash },
   settings: { title: 'Tetapan', icon: 'settings', render: renderSettings }
 };
 const NAV_GROUPS = [
   { label: 'Simpanan', views: ['inbox', 'all', 'image', 'link', 'note', 'info'] },
   { label: 'Kerja', views: ['tasks', 'board'] },
   { label: 'Belajar', views: ['classes', 'watch'] },
-  { label: 'App', views: ['settings'] }
+  { label: 'Lain-lain', views: ['archive', 'trash', 'settings'] }
 ];
 const TAB_VIEWS = ['inbox', 'tasks', 'board', 'classes', 'watch'];
 
@@ -84,7 +88,9 @@ function viewSummary(key) {
   if (key === 'board') return counted(state.tables.Kad.length, 'kad') || 'Susun kerja kau';
   if (key === 'classes') return counted(state.tables.Kelas.length, 'kelas') || 'Link, akaun dan password';
   if (key === 'watch') return 'YouTube, TikTok dan Facebook';
-  if (key === 'settings') return 'Sambungan dan kunci app';
+  if (key === 'settings') return 'Sambungan, AI dan kunci app';
+  if (key === 'archive') return counted(recordsIn('arkib').length, 'rekod') || 'Simpan untuk rujukan';
+  if (key === 'trash') return counted(recordsIn('sampah').length, 'rekod') || 'Boleh dipulihkan dalam 30 hari';
   const filter = LIBRARY_VIEWS[key] && LIBRARY_VIEWS[key].filter;
   return filter ? counted(state.items.filter(filter).length, 'item') : '';
 }
@@ -112,7 +118,7 @@ function renderChrome() {
   const banner = $('banner');
   banner.hidden = !state.needsBackendUpdate;
   if (state.needsBackendUpdate) {
-    banner.textContent = 'Backend Google masih versi lama, jadi data tak dapat dimuat. ' +
+    banner.textContent = 'Backend Google masih versi lama, jadi arkib, sampah dan AI belum berfungsi. ' +
       'Tampal Code.gs dan appsscript.json baru dalam Apps Script, jalankan setup, kemudian Deploy → Manage deployments → Edit → New version.';
   }
 }
@@ -298,7 +304,13 @@ async function start() {
   setRenderer(renderAll);
   // Kunci dulu sebelum apa-apa data dilukis. Barisan hantar tetap berjalan di belakang skrin kunci,
   // supaya screenshot yang dikongsi terus sampai ke Google tanpa perlu memasukkan PIN.
-  setLockHandlers({ onLock: lockVault, onChange: renderChrome });
+  setLockHandlers({
+    onLock: () => {
+      lockVault();
+      clearAiChat();
+    },
+    onChange: renderChrome
+  });
   lockNow();
   setupAutoLock();
   $('lock-now').addEventListener('click', lockNow);
@@ -306,6 +318,7 @@ async function start() {
   setupInstall();
   setupCapture();
 
+  $('ai-open').addEventListener('click', () => openAi());
   $('open-menu').addEventListener('click', openMenu);
   $('close-menu').addEventListener('click', closeMenu);
   $('scrim').addEventListener('click', closeMenu);

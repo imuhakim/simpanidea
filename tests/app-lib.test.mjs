@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { parseVideo } from '../docs/lib/video.js';
+import { buildAiContext } from '../docs/lib/ai-context.js';
 import { createVault, decrypt, encrypt, unlockVault } from '../docs/lib/vault.js';
 import { createPinRecord, isValidPin, isWeakPin, lockoutSeconds, verifyPin } from '../docs/lib/pin.js';
 
@@ -104,4 +105,41 @@ test('PIN: format dan PIN lemah dikenali', () => {
 test('PIN: cubaan salah dilambatkan selepas 5 kali, dengan had', () => {
   assert.deepEqual([0, 4, 5, 6, 7].map(lockoutSeconds), [0, 0, 30, 60, 120]);
   assert.equal(lockoutSeconds(50), 900);
+});
+
+const contextTables = () => ({
+  Item: [
+    { id: 'a', jenis: 'note', tajuk: 'Idea kopi', nota: 'Jual kopi', dicipta: '2026-11-01T00:00:00Z', ruang: '', keadaan: '' },
+    { id: 'b', jenis: 'link', tajuk: 'Artikel', url: 'https://contoh.my', dicipta: '2026-11-02T00:00:00Z', ruang: 'info', keadaan: 'arkib' },
+    { id: 'c', jenis: 'note', tajuk: 'Dah buang', nota: 'rahsia sampah', keadaan: 'sampah' },
+    { id: 'd', jenis: 'image', tajuk: 'lampiran.png', ruang: 'lampiran', keadaan: '' }
+  ],
+  Tugasan: [{ id: 't', tajuk: 'Bayar yuran', nota: '', siap: '', tarikh_akhir: '2026-11-10', keadaan: '' }],
+  Kad: [{ id: 'k', tajuk: 'Reka logo', nota: 'gelap', lajur_id: 'l1', keadaan: '' }],
+  Lajur: [{ id: 'l1', tajuk: 'Nak buat' }],
+  Kelas: [{ id: 'm', nama: 'Canva', url: 'https://kelas.my', username: 'aku@emel.my', password_sulit: 'v1.SULIT.SULIT', status: 'tengah', berhenti_di: 'Modul 3', nota: 'best', keadaan: '' }],
+  Tetapan: [{ id: 'peti-password', nilai: 'RAHSIA-PETI' }]
+});
+
+test('konteks AI mengandungi data berguna tanpa rahsia atau sampah', () => {
+  const text = buildAiContext(contextTables(), { today: '2026-11-04', view: 'Inbox' });
+  for (const wanted of ['Idea kopi', 'Jual kopi', 'Bayar yuran', '2026-11-10', 'Reka logo', 'Nak buat', 'Canva', 'Modul 3', 'Artikel', 'arkib', '2026-11-04', 'Inbox']) {
+    assert.ok(text.includes(wanted), wanted);
+  }
+  for (const hidden of ['SULIT', 'aku@emel.my', 'RAHSIA-PETI', 'rahsia sampah', 'Dah buang', 'lampiran.png']) {
+    assert.ok(!text.includes(hidden), hidden);
+  }
+});
+
+test('konteks AI dipendekkan bila data terlalu banyak, dan yang terbaru dikekalkan', () => {
+  const tables = contextTables();
+  tables.Item = Array.from({ length: 2000 }, (_, i) => ({
+    id: 'i' + i, jenis: 'note', tajuk: 'Nota ' + i, nota: 'x'.repeat(500),
+    dicipta: new Date(Date.UTC(2026, 0, 1) + i * 60000).toISOString(), ruang: '', keadaan: ''
+  }));
+  const text = buildAiContext(tables, { today: '2026-11-04', view: 'Semua' });
+  assert.ok(text.length <= 60000);
+  assert.ok(text.includes('Nota 1999'));
+  assert.ok(!text.includes('Nota 0 '));
+  assert.ok(text.includes('Bayar yuran'));
 });

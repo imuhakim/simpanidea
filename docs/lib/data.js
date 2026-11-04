@@ -9,10 +9,17 @@ const KEEP_AS_IS = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const EMPTY_TABLES = () => ({ Item: [], Tugasan: [], Kad: [], Lajur: [], Kelas: [], Tetapan: [] });
 // Item ditulis dengan nama lajur Sheet, tapi dibaca dalam app dengan nama yang lebih mudah.
 const ITEM_FIELD_TO_COLUMN = { title: 'tajuk', text: 'nota', status: 'status', ruang: 'ruang', gambar: 'gambar' };
+const REQUIRED_BACKEND_VERSION = 3;
+const TRASH_DAYS = 30;
+export const TRASH_LIFETIME_DAYS = TRASH_DAYS;
+let purgedThisSession = false;
 
 export const state = {
   view: 'inbox',
   query: '',
+  // raw ialah salinan penuh Sheet. tables dan items hanya mengandungi rekod aktif,
+  // jadi rekod dalam arkib dan sampah tidak muncul di halaman biasa.
+  raw: EMPTY_TABLES(),
   tables: EMPTY_TABLES(),
   items: [],
   queue: [],
@@ -75,7 +82,7 @@ export async function callBackend(body) {
 export const idList = (value) => String(value || '').split(',').filter(Boolean);
 export const newId = () => crypto.randomUUID();
 
-function itemFromRow(row) {
+export function itemFromRow(row) {
   return {
     id: row.id,
     createdAt: row.dicipta,
@@ -86,8 +93,28 @@ function itemFromRow(row) {
     driveUrl: row.drive_url,
     status: row.status,
     ruang: row.ruang || '',
-    gambar: row.gambar || ''
+    gambar: row.gambar || '',
+    keadaan: row.keadaan || '',
+    dibuangPada: row.dibuang_pada || ''
   };
+}
+
+export const findRecord = (table, id) => (state.raw[table] || []).find((row) => row.id === id) || null;
+
+export function findItem(id) {
+  const row = findRecord('Item', id);
+  return row ? itemFromRow(row) : null;
+}
+
+/** Semua rekod dalam arkib atau sampah, kecuali gambar lampiran yang mengikut induknya. */
+export function recordsIn(keadaan) {
+  const rows = [];
+  for (const table of ['Item', 'Tugasan', 'Kad', 'Kelas']) {
+    for (const record of state.raw[table] || []) {
+      if (record.keadaan === keadaan && record.ruang !== 'lampiran') rows.push({ table, record });
+    }
+  }
+  return rows;
 }
 
 function applyOperation(tables, entry) {
@@ -105,12 +132,33 @@ function applyOperation(tables, entry) {
 const isOperation = (entry) => entry.kind === 'op';
 
 function syncDerived() {
+  const active = {};
+  for (const [table, rows] of Object.entries(state.raw)) {
+    active[table] = rows.filter((row) => !row.keadaan);
+  }
+  state.tables = { ...EMPTY_TABLES(), ...active };
   state.items = state.tables.Item.map(itemFromRow);
+}
+
+/** Buang kekal satu rekod bersama gambar lampirannya. */
+export function hardDelete(table, record) {
+  idList(record.gambar).forEach((id) => deleteRecord('Item', id));
+  return deleteRecord(table, record.id);
+}
+
+function purgeOldTrash() {
+  if (purgedThisSession) return;
+  purgedThisSession = true;
+  const cutoff = Date.now() - TRASH_DAYS * 86400000;
+  for (const { table, record } of recordsIn('sampah')) {
+    const removedAt = new Date(record.dibuang_pada).getTime();
+    if (removedAt && removedAt < cutoff) hardDelete(table, record);
+  }
 }
 
 export async function loadLocalData() {
   const cached = await SimpanStore.getTables();
-  state.tables = { ...EMPTY_TABLES(), ...(cached || {}) };
+  state.raw = { ...EMPTY_TABLES(), ...(cached || {}) };
   await loadQueue();
   syncDerived();
 }
@@ -131,12 +179,14 @@ export async function refresh() {
       // Perubahan yang belum sampai ke Google mesti kekal kelihatan.
       const tables = { ...EMPTY_TABLES(), ...result.tables };
       state.queue.filter(isOperation).forEach((entry) => applyOperation(tables, entry));
-      state.tables = tables;
+      state.raw = tables;
       syncDerived();
       state.lastSync = new Date();
       state.syncError = '';
-      state.needsBackendUpdate = false;
+      // Backend lama masih boleh dibaca, tapi tak dapat menyimpan arkib dan sampah.
+      state.needsBackendUpdate = (result.version || 0) < REQUIRED_BACKEND_VERSION;
       state.checks.backend = { state: 'ok', label: 'Sambungan ke Google berjaya' };
+      if (!state.needsBackendUpdate) purgeOldTrash();
     } else if (result.code === 'bad_request') {
       state.needsBackendUpdate = true;
       state.syncError = 'Backend perlu dikemas kini';
@@ -171,7 +221,7 @@ export async function writeRecord(table, record) {
     error: ''
   };
   await SimpanStore.enqueue(entry);
-  applyOperation(state.tables, { ...entry, record });
+  applyOperation(state.raw, { ...entry, record });
   syncDerived();
   await loadQueue();
   render();
@@ -198,7 +248,7 @@ export async function deleteRecord(table, recordId) {
       error: ''
     });
   }
-  applyOperation(state.tables, { table, recordId, op: 'delete' });
+  applyOperation(state.raw, { table, recordId, op: 'delete' });
   syncDerived();
   await loadQueue();
   render();
@@ -361,4 +411,9 @@ export async function processQueue() {
     await refresh();
     await processQueue();
   }
+}
+
+export function firstColumnId() {
+  const [first] = [...state.tables.Lajur].sort((a, b) => Number(a.kedudukan) - Number(b.kedudukan));
+  return first ? first.id : null;
 }

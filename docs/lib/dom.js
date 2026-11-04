@@ -9,7 +9,7 @@ export function h(tag, props = {}, ...children) {
     else if (PROPERTIES.has(key)) element[key] = value;
     else if (value !== false && value != null) element.setAttribute(key, value === true ? '' : value);
   }
-  element.append(...children.flat().filter((child) => child != null && child !== false));
+  element.append(...children.flat(Infinity).filter((child) => child != null && child !== false));
   return element;
 }
 
@@ -31,17 +31,27 @@ export function parkToast() {
   if (toastElement) document.body.append(toastElement);
 }
 
-export function toast(message, isError = false) {
+export function toast(message, isError = false, action = null) {
   toastElement = toastElement || document.getElementById('toast');
   const element = toastElement;
   // Dialog berada di lapisan paling atas, jadi toast mesti berada di dalam dialog teratas untuk kelihatan.
   const topDialog = [...document.querySelectorAll('dialog[open]')].at(-1);
   (topDialog || document.body).append(element);
   element.textContent = message;
+  if (action) {
+    element.append(h('button', {
+      class: 'toast-action',
+      type: 'button',
+      onclick: () => {
+        element.hidden = true;
+        action.onClick();
+      }
+    }, action.label));
+  }
   element.classList.toggle('error', isError);
   element.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { element.hidden = true; }, isError ? 6000 : 3000);
+  toastTimer = setTimeout(() => { element.hidden = true; }, isError || action ? 6000 : 3000);
 }
 
 function showDialog(className, children, labelledBy, onClose) {

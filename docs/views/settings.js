@@ -2,6 +2,7 @@
 import { isAllowedBackend, loadQueue, loadSettings, processQueue, refresh, render, saveSettings, state } from '../lib/data.js';
 import { field, h, toast } from '../lib/dom.js';
 import { renderLockSettings } from './lock.js';
+import { renderAiSettings } from './ai.js';
 
 let installPrompt = null;
 export const setInstallPrompt = (event) => { installPrompt = event; };
@@ -90,6 +91,7 @@ export function renderSettings() {
 
   const page = h('div', { class: 'settings' },
     h('section', {}, h('h2', {}, 'Sambungan Google'), form),
+    renderAiSettings(),
     renderLockSettings(),
     h('section', { id: 'failed-box', hidden: true },
       h('h2', {}, 'Gagal dihantar'),

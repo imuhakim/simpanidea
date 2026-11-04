@@ -167,6 +167,3 @@ export function attachmentEditor(initial) {
   };
 }
 
-export function deleteAttachments(value) {
-  idList(value).forEach((id) => deleteRecord('Item', id));
-}

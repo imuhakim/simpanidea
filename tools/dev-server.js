@@ -17,6 +17,18 @@ const TYPES = {
 
 const harness = createHarness();
 harness.setup();
+// Jawapan tiruan untuk AI, supaya panel boleh diuji tanpa kunci API sebenar.
+harness.state.anthropic = (url) => ({
+  code: 200,
+  body: url.endsWith('/messages')
+    ? {
+      stop_reason: 'end_turn',
+      model: 'claude-opus-5-5',
+      usage: { input_tokens: 1200, output_tokens: 80 },
+      content: [{ type: 'text', text: 'Ini **jawapan tiruan**.\n\n- Perkara satu\n- Perkara `dua`\n\n<img src=x onerror=alert(1)>' }]
+    }
+    : { data: [] }
+});
 const results = new Map();
 let nextResult = 0;
 
@@ -55,6 +67,7 @@ const server = http.createServer(async (request, response) => {
       sheets: Object.fromEntries(
         Object.entries(harness.state.sheets).map(([name, sheet]) => [name, sheet.rows])
       ),
+      ai: harness.state.requests.map((request) => ({ url: request.url, body: request.body })),
       files: harness.state.files.map((file) => ({
         name: file.blob.name,
         mimeType: file.blob.mimeType,
