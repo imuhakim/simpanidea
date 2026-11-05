@@ -1,6 +1,6 @@
 importScripts('store.js');
 
-const CACHE_NAME = 'simpanidea-v10';
+const CACHE_NAME = 'simpanidea-v11';
 const APP_FILES = [
   './', 'index.html', 'app.js', 'store.js', 'style.css',
   'lib/ai-context.js', 'lib/data.js', 'lib/dom.js', 'lib/images.js', 'lib/pin.js', 'lib/vault.js', 'lib/video.js',

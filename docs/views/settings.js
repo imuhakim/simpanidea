@@ -38,7 +38,7 @@ function shortcutStep(text) {
   return h('li', {}, text);
 }
 
-/** Panduan Apple Shortcuts, kerana iPhone tak benarkan web app masuk senarai Share. */
+/** Panduan Apple Shortcuts, kerana iPhone tidak benarkan web app masuk senarai Share. */
 function renderShortcutGuide() {
   const copyButton = (label, read, done) => h('button', {
     class: 'button',
@@ -51,7 +51,7 @@ function renderShortcutGuide() {
 
   const readUrl = () => {
     const { url } = loadSettings();
-    if (!url) toast('Isi sambungan Google dulu', true);
+    if (!url) toast('Isi sambungan Google dahulu', true);
     return url;
   };
 
@@ -59,9 +59,9 @@ function renderShortcutGuide() {
     try {
       const result = await callBackend({ action });
       if (result.ok) return result.key;
-      toast(/Tindakan/.test(result.error) ? 'Backend Google perlu dikemas kini dulu' : result.error, true);
+      toast(/Tindakan/.test(result.error) ? 'Backend Google perlu dikemas kini dahulu' : result.error, true);
     } catch {
-      toast('Tak dapat sampai ke Google', true);
+      toast('Tidak dapat sampai ke Google', true);
     }
     return null;
   };
@@ -69,7 +69,7 @@ function renderShortcutGuide() {
   return h('section', {},
     h('h2', {}, 'Share dari iPhone'),
     h('p', { class: 'field-hint section-hint' },
-      'iPhone tak benarkan web app masuk senarai Share. Bina 2 Shortcut kecil ni untuk menggantikannya. Android tak perlukan ini. Guna kunci Shortcut, bukan kunci rahsia: ia cuma boleh menambah item, dan tak boleh membaca data kau.'),
+      'iPhone tidak benarkan web app masuk senarai Share. Bina 2 Shortcut kecil ini untuk menggantikannya. Android tidak perlukan ini. Guna kunci Shortcut, bukan kunci rahsia: ia cuma boleh menambah item, dan tidak boleh membaca data anda.'),
     h('div', { class: 'button-row shortcut-copy' },
       copyButton('Salin URL', readUrl, 'URL disalin'),
       copyButton('Salin kunci Shortcut', () => fetchKey('shortcutKey'), 'Kunci Shortcut disalin'),
@@ -110,7 +110,7 @@ function renderShortcutGuide() {
         shortcutStep('Tambah 3 medan teks: secret (tampal kunci Shortcut), action (tulis quickSave), text (pilih Shortcut Input).'),
         shortcutStep('Tambah Show Notification: Disimpan.'))),
     h('p', { class: 'field-hint' },
-      'Selepas siap, Share dari Photos atau Safari dan pilih Shortcut tu. Kalau Shortcut tersebar, orang lain cuma boleh menambah item. Tekan Tukar kunci untuk menghentikannya.'));
+      'Selepas siap, Share dari Photos atau Safari dan pilih Shortcut itu. Kalau Shortcut tersebar, orang lain cuma boleh menambah item. Tekan Tukar kunci untuk menghentikannya.'));
 }
 
 export function updateSettings() {

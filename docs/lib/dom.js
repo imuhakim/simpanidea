@@ -194,7 +194,7 @@ export async function copyText(text, doneMessage) {
     await navigator.clipboard.writeText(text);
     toast(doneMessage);
   } catch {
-    toast('Tak dapat salin', true);
+    toast('Tidak dapat salin', true);
   }
 }
 

@@ -172,7 +172,7 @@ function showLockScreen() {
       pad.element,
       h('button', { class: 'button plain', type: 'button', onclick: forgotPin }, 'Lupa PIN?')));
   lockDialog.addEventListener('keydown', (event) => pad.onKeydown(event));
-  // Skrin kunci tak boleh ditutup kecuali dengan PIN yang betul.
+  // Skrin kunci tidak boleh ditutup kecuali dengan PIN yang betul.
   lockDialog.addEventListener('cancel', (event) => event.preventDefault());
   lockDialog.addEventListener('close', () => {
     if (locked && lockDialog) lockDialog.showModal();
@@ -204,7 +204,7 @@ async function forgotPin() {
   const queued = (await SimpanStore.listQueued()).length;
   const yes = await askConfirm({
     title: 'Buang PIN dan set semula peranti ini?',
-    text: 'Data di Google Drive dan Sheets kekal selamat. Peranti ini akan dikosongkan, dan kau perlu masukkan URL Web App dan kunci rahsia sekali lagi.' +
+    text: 'Data di Google Drive dan Sheets kekal selamat. Peranti ini akan dikosongkan, dan anda perlu masukkan URL Web App dan kunci rahsia sekali lagi.' +
       (queued ? ' ' + queued + ' perubahan yang belum dihantar akan hilang.' : ''),
     confirmLabel: 'Set semula'
   });
@@ -263,7 +263,7 @@ function askPin(title, note) {
 
 async function chooseNewPin() {
   const first = await askPin('Cipta PIN ' + PIN_LENGTH + ' digit',
-    'PIN ini untuk peranti ini sahaja, dan tak perlu sama dengan kata laluan induk kelas.');
+    'PIN ini untuk peranti ini sahaja, dan tidak perlu sama dengan kata laluan induk kelas.');
   if (!first) return null;
   if (isWeakPin(first)) {
     toast('PIN ini senang diteka. Pilih nombor lain.', true);
@@ -272,7 +272,7 @@ async function chooseNewPin() {
   const second = await askPin('Ulang PIN');
   if (!second) return null;
   if (first !== second) {
-    toast('Kedua-dua PIN tak sama', true);
+    toast('Kedua-dua PIN tidak sama', true);
     return null;
   }
   return first;

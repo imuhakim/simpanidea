@@ -1,5 +1,5 @@
 // Penyulitan password kelas. Password disulitkan dalam peranti sebelum dihantar,
-// jadi Google Sheets hanya menyimpan teks yang tak boleh dibaca tanpa kata laluan induk.
+// jadi Google Sheets hanya menyimpan teks yang tidak boleh dibaca tanpa kata laluan induk.
 const ITERATIONS = 600000;
 const CHECK_TEXT = 'simpanidea-vault-check';
 

@@ -120,7 +120,7 @@ export function renderTrash() {
               onclick: async () => {
                 const yes = await askConfirm({
                   title: 'Padam kekal?',
-                  text: '"' + titleOf(table, record) + '" tak boleh dipulihkan selepas ini.',
+                  text: '"' + titleOf(table, record) + '" tidak boleh dipulihkan selepas ini.',
                   confirmLabel: 'Padam kekal'
                 });
                 if (yes) hardDelete(table, record);

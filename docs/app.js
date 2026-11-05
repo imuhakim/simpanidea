@@ -85,9 +85,9 @@ function syncStatus() {
 
 function viewSummary(key) {
   const counted = (total, label) => (total ? total + ' ' + label : '');
-  if (key === 'inbox') return countFor('inbox') ? countFor('inbox') + ' menunggu dilihat' : 'Semua dah dilihat';
+  if (key === 'inbox') return countFor('inbox') ? countFor('inbox') + ' menunggu dilihat' : 'Semua sudah dilihat';
   if (key === 'tasks') return countFor('tasks') ? countFor('tasks') + ' belum siap' : 'Tiada yang tertunggak';
-  if (key === 'board') return counted(state.tables.Kad.length, 'kad') || 'Susun kerja kau';
+  if (key === 'board') return counted(state.tables.Kad.length, 'kad') || 'Susun kerja anda';
   if (key === 'classes') return counted(state.tables.Kelas.length, 'kelas') || 'Link, akaun dan password';
   if (key === 'watch') return 'YouTube, TikTok dan Facebook';
   if (key === 'receipts') return counted(state.tables.Resit.length, 'resit') || 'AI baca dan isikan data';
@@ -230,7 +230,7 @@ function handleShareResult() {
 
 async function setupServiceWorker() {
   if (!('serviceWorker' in navigator)) {
-    state.checks.worker = { state: 'fail', label: 'Browser ini tak sokong service worker' };
+    state.checks.worker = { state: 'fail', label: 'Browser ini tidak sokong service worker' };
     return;
   }
   try {
@@ -306,7 +306,7 @@ function setupCapture() {
 
 async function start() {
   setRenderer(renderAll);
-  // Kunci dulu sebelum apa-apa data dilukis. Barisan hantar tetap berjalan di belakang skrin kunci,
+  // Kunci dahulu sebelum apa-apa data dilukis. Barisan hantar tetap berjalan di belakang skrin kunci,
   // supaya screenshot yang dikongsi terus sampai ke Google tanpa perlu memasukkan PIN.
   setLockHandlers({
     onLock: () => {
@@ -374,7 +374,7 @@ async function start() {
     }
   });
 
-  // Paparkan salinan dalam peranti dulu supaya app terus terbuka walaupun Google perlahan.
+  // Paparkan salinan dalam peranti dahulu supaya app terus terbuka walaupun Google perlahan.
   await loadLocalData();
   route();
 

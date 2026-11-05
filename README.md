@@ -1,17 +1,17 @@
 # SimpanIdea
 
-App peribadi untuk simpan screenshot, link, nota, tugasan, kad kanban, kelas online dan video dalam satu tempat. Data kau kekal dalam Google Drive dan Google Sheets kau sendiri.
+App peribadi untuk simpan screenshot, link, nota, tugasan, kad kanban, kelas online dan video dalam satu tempat. Data anda kekal dalam Google Drive dan Google Sheets anda sendiri.
 
 | Bahagian | Kegunaan |
 |---|---|
 | **Inbox, Semua, Screenshot, Link, Nota** | Semua yang disimpan dari phone dan komputer |
-| **Info Penting** | Gambar yang kau perlu rujuk semula, seperti resit dan tiket |
+| **Info Penting** | Gambar yang anda perlu rujuk semula, seperti resit dan tiket |
 | **Tugasan** | Senarai tugasan dikumpul ikut tarikh |
 | **Papan** | Kanban dengan lajur yang boleh ditambah dan kad yang boleh diseret |
-| **Kelas** | Link, akaun, password disulitkan, dan rekod dah buka atau belum |
+| **Kelas** | Link, akaun, password disulitkan, dan rekod sudah buka atau belum |
 | **Tonton** | Video YouTube, TikTok dan Facebook dimainkan terus dalam app |
 | **Resit** | Ambil gambar resit, dan AI isikan peniaga, tarikh, jumlah dan barangan |
-| **Tanya AI** | Tanya apa saja, atau minta AI huraikan screenshot dan rekod kau |
+| **Tanya AI** | Tanya apa saja, atau minta AI huraikan screenshot dan rekod anda |
 | **Arkib** | Rekod yang keluar dari senarai harian, tapi kekal untuk dirujuk |
 | **Sampah** | Rekod yang dipadam, boleh dipulihkan dalam 30 hari |
 
@@ -19,7 +19,7 @@ App peribadi untuk simpan screenshot, link, nota, tugasan, kad kanban, kelas onl
 
 | Folder | Kegunaan |
 |---|---|
-| `docs/` | App yang dipasang kat phone, dihoskan di GitHub Pages |
+| `docs/` | App yang dipasang di phone, dihoskan di GitHub Pages |
 | `apps-script/` | Backend yang simpan data ke Drive dan Sheets |
 | `tools/` | Pelayan ujian tempatan dan penjana ikon |
 | `tests/` | Ujian backend, video dan penyulitan |
@@ -33,7 +33,7 @@ App peribadi untuk simpan screenshot, link, nota, tugasan, kad kanban, kelas onl
 3. Tekan **Project Settings** (ikon gear), dan tandakan **Show "appsscript.json" manifest file in editor**.
 4. Balik ke **Editor**, buka `appsscript.json`, dan ganti isinya dengan [apps-script/appsscript.json](apps-script/appsscript.json).
 5. Pilih fungsi `setup` di bar atas dan tekan **Run**. Benarkan akses bila diminta.
-   - Kalau keluar amaran "Google hasn't verified this app", tekan **Advanced**, kemudian **Go to SimpanIdea**. Ini skrip kau sendiri.
+   - Kalau keluar amaran "Google hasn't verified this app", tekan **Advanced**, kemudian **Go to SimpanIdea**. Ini skrip anda sendiri.
 6. Salin **kunci rahsia** daripada log di bawah. Jangan kongsi dengan sesiapa.
 7. Tekan **Deploy → New deployment**, pilih jenis **Web app**:
    - **Execute as:** Me
@@ -42,12 +42,12 @@ App peribadi untuk simpan screenshot, link, nota, tugasan, kad kanban, kelas onl
 
 "Anyone" diperlukan supaya app boleh sampai ke backend. Tanpa kunci rahsia, tiada apa boleh dibaca atau disimpan.
 
-### Langkah 2: Pasang kat Android
+### Langkah 2: Pasang di Android
 
-1. Buka <https://imuhakim.github.io/simpanidea/> dalam **Chrome** kat phone.
+1. Buka <https://imuhakim.github.io/simpanidea/> dalam **Chrome** di phone.
 2. Tekan ikon menu (☰), dan pilih **Tetapan**. Tampal URL Web App dan kunci rahsia, kemudian tekan **Simpan dan uji**.
 3. Pastikan **Sambungan ke Google berjaya** ada di bahagian Semakan.
-4. Tekan **Pasang app** di Tetapan. Kalau butang tu tak keluar, buka menu Chrome (⋮) dan pilih **Add to Home screen** atau **Install app**.
+4. Tekan **Pasang app** di Tetapan. Kalau butang itu tidak keluar, buka menu Chrome (⋮) dan pilih **Add to Home screen** atau **Install app**.
 5. Buka SimpanIdea dari home screen sekali, dan isi tetapan semula kalau kosong.
 
 ## Kemas kini backend
@@ -55,13 +55,13 @@ App peribadi untuk simpan screenshot, link, nota, tugasan, kad kanban, kelas onl
 Bila `Code.gs` atau `appsscript.json` berubah, app mungkin papar amaran "Backend Google masih versi lama".
 
 1. Tampal isi baru [apps-script/Code.gs](apps-script/Code.gs) dan [apps-script/appsscript.json](apps-script/appsscript.json) dalam Apps Script, dan simpan.
-2. Pilih fungsi `setup` dan tekan **Run**. Kalau Google minta kebenaran baru, benarkan. Data dan kunci sedia ada tak berubah.
+2. Pilih fungsi `setup` dan tekan **Run**. Kalau Google minta kebenaran baru, benarkan. Data dan kunci sedia ada tidak berubah.
 3. Tekan **Deploy → Manage deployments**, kemudian ikon pensil (**Edit**).
 4. Di **Version**, pilih **New version**, dan tekan **Deploy**.
 
-Cara ni mengekalkan URL yang sama, jadi tetapan app tak perlu diubah. Jangan pilih **New deployment**, sebab URL akan bertukar.
+Cara ini mengekalkan URL yang sama, jadi tetapan app tidak perlu diubah. Jangan pilih **New deployment**, sebab URL akan bertukar.
 
-## Senarai ujian kat phone
+## Senarai ujian di phone
 
 | # | Cuba | Hasil yang patut keluar |
 |---|---|---|
@@ -77,41 +77,41 @@ SimpanIdea mungkin ambil beberapa minit untuk muncul dalam senarai Share selepas
 
 ## Password kelas
 
-- Kali pertama kau simpan password, app minta kau cipta **kata laluan induk**.
-- Password disulitkan dalam peranti sebelum dihantar, jadi Sheet cuma simpan teks yang tak boleh dibaca.
-- Kata laluan induk tak disimpan di mana-mana. **Kalau lupa, password yang tersimpan tak boleh dipulihkan.**
-- App mengunci semula selepas 15 minit, atau bila kau tekan **Kunci password**.
-- Status kelas dan tarikh terakhir dibuka hanya direkod kalau kau buka kelas melalui butang **Buka** dalam app.
+- Kali pertama anda simpan password, app minta anda cipta **kata laluan induk**.
+- Password disulitkan dalam peranti sebelum dihantar, jadi Sheet cuma simpan teks yang tidak boleh dibaca.
+- Kata laluan induk tidak disimpan di mana-mana. **Kalau lupa, password yang tersimpan tidak boleh dipulihkan.**
+- App mengunci semula selepas 15 minit, atau bila anda tekan **Kunci password**.
+- Status kelas dan tarikh terakhir dibuka hanya direkod kalau anda buka kelas melalui butang **Buka** dalam app.
 
 ## Share dari iPhone
 
-iPhone tak benarkan web app masuk senarai Share, jadi 2 Shortcut kecil menggantikannya. Langkah penuh ada di **Tetapan → Share dari iPhone**, dengan butang untuk menyalin URL dan kunci rahsia.
+iPhone tidak benarkan web app masuk senarai Share, jadi 2 Shortcut kecil menggantikannya. Langkah penuh ada di **Tetapan → Share dari iPhone**, dengan butang untuk menyalin URL dan kunci rahsia.
 
 - **Simpan Gambar:** menerima gambar dari Photos, termasuk banyak gambar sekali gus.
 - **Simpan Link:** menerima link dan teks dari Safari dan app lain.
 
-Shortcut guna **kunci Shortcut** yang berasingan daripada kunci rahsia. Ia cuma boleh menambah item, dan tak boleh membaca, mengubah atau memadam data. Kalau tersebar, tekan **Tukar kunci** di Tetapan, dan kemas kini kedua-dua Shortcut.
+Shortcut guna **kunci Shortcut** yang berasingan daripada kunci rahsia. Ia cuma boleh menambah item, dan tidak boleh membaca, mengubah atau memadam data. Kalau tersebar, tekan **Tukar kunci** di Tetapan, dan kemas kini kedua-dua Shortcut.
 
 ## Info Penting tersorok
 
-- Hanya tajuk dan tarikh kelihatan. Tekan ikon mata untuk tengok isi, dan tekan sekali lagi untuk sorok.
-- Isi disorok semula bila kau tukar halaman, tinggalkan app, atau app dikunci.
-- Rekod Info Penting tak muncul di Semua, Screenshot, Link dan Nota. Carian hanya melihat tajuknya.
-- Tanya AI hanya menerima tajuknya, kecuali kau bertanya terus dari rekod tersebut.
+- Hanya tajuk dan tarikh kelihatan. Tekan ikon mata untuk lihat isi, dan tekan sekali lagi untuk sorok.
+- Isi disorok semula bila anda tukar halaman, tinggalkan app, atau app dikunci.
+- Rekod Info Penting tidak muncul di Semua, Screenshot, Link dan Nota. Carian hanya melihat tajuknya.
+- Tanya AI hanya menerima tajuknya, kecuali anda bertanya terus dari rekod tersebut.
 - Ini penyorok paparan, bukan penyulitan. Isinya masih biasa dalam Drive dan Sheet, jadi jangan simpan password di sini. Gunakan Kelas untuk password.
 
 ## Resit
 
 Tekan **Ambil gambar** di halaman Resit. Resit terus dimuat naik dan AI mengisi datanya, dipaparkan di sebelah gambar.
 
-- **Perlu kunci API:** sama seperti Tanya AI, dan setiap imbasan dicaj kepada akaun API kau. Model ikut pilihan dalam panel Tanya AI.
+- **Perlu kunci API:** sama seperti Tanya AI, dan setiap imbasan dicaj kepada akaun API anda. Model ikut pilihan dalam panel Tanya AI.
 - **Semak hasilnya:** AI boleh tersilap baca, terutama resit kabur atau pudar. Semua medan boleh dibetulkan.
 - **Tiada kunci atau gagal:** resit tetap tersimpan, dan boleh diimbas kemudian dengan **Imbas dengan AI**.
 - **Jumlah bulanan:** dikira ikut tarikh resit, dan diasingkan ikut mata wang.
 
 ## Tarikh dan masa
 
-Semua rekod menunjukkan tarikh dan masa ia dibuat. Item yang menunggu internet kekal dengan masa ia dibuat di peranti, bukan masa ia sampai ke Google. Masa ini ikut jam peranti kau.
+Semua rekod menunjukkan tarikh dan masa ia dibuat. Item yang menunggu internet kekal dengan masa ia dibuat di peranti, bukan masa ia sampai ke Google. Masa ini ikut jam peranti anda.
 
 ## Pindah, Arkib dan Sampah
 
@@ -122,9 +122,9 @@ Semua rekod menunjukkan tarikh dan masa ia dibuat. Item yang menunggu internet k
 
 ## Tanya AI
 
-Tekan **Tanya AI** di bahagian atas, atau dalam mana-mana rekod. Dari screenshot, AI boleh tengok gambar tu dan menghuraikannya. Jawapan boleh disimpan sebagai nota, tugasan atau kad.
+Tekan **Tanya AI** di bahagian atas, atau dalam mana-mana rekod. Dari screenshot, AI boleh lihat gambar itu dan menghuraikannya. Jawapan boleh disimpan sebagai nota, tugasan atau kad.
 
-Untuk mula, kau perlu kunci API sendiri:
+Untuk mula, anda perlu kunci API sendiri:
 
 1. Buka <https://console.anthropic.com/settings/keys> dan log masuk.
 2. Tambah kredit. API dibayar berasingan daripada langganan Claude, dan elok letak had belanja.
@@ -132,19 +132,19 @@ Untuk mula, kau perlu kunci API sendiri:
 
 Yang perlu tahu:
 
-- **Kunci API:** disimpan dalam Script Properties di Apps Script kau, dan tak pernah dipulangkan kepada app.
-- **Data yang dihantar ke Anthropic:** bila **Guna simpanan aku** ditanda, tajuk, catatan dan link dihantar sekali. Gambar hanya dihantar bila kau bertanya dari rekod tersebut.
-- **Tak pernah dihantar:** password, username kelas, kunci rahsia, dan rekod dalam Sampah.
+- **Kunci API:** disimpan dalam Script Properties di Apps Script anda, dan tidak pernah dipulangkan kepada app.
+- **Data yang dihantar ke Anthropic:** bila **Guna simpanan saya** ditanda, tajuk, catatan dan link dihantar sekali. Gambar hanya dihantar bila anda bertanya dari rekod tersebut.
+- **Tidak pernah dihantar:** password, username kelas, kunci rahsia, dan rekod dalam Sampah.
 - **Kos:** setiap jawapan tunjuk jumlah token. Opus 5.5 ialah lalai dan paling mahal, manakala Haiku 5.5 paling murah. Tukar di bawah kotak soalan.
-- **Had:** soalan melalui Apps Script, jadi jawapan muncul sekali gus dan jawapan panjang boleh dipotong. AI tak boleh mengubah data sendiri, dan tak boleh membuka link.
+- **Had:** soalan melalui Apps Script, jadi jawapan muncul sekali gus dan jawapan panjang boleh dipotong. AI tidak boleh mengubah data sendiri, dan tidak boleh membuka link.
 
 ## Kunci PIN
 
 - Hidupkan di **Tetapan → Kunci app**. PIN ialah 6 digit, dan berasingan untuk setiap peranti.
-- App dikunci setiap kali dibuka, selepas tidak digunakan (1 hingga 30 minit, lalai 5), dan bila kau tekan ikon kunci di sidebar.
-- Screenshot yang dikongsi tetap dihantar ke Google walaupun app terkunci, tapi kau perlu PIN untuk melihatnya.
-- Selepas 5 kali salah, kau perlu tunggu 30 saat, dan tempoh ini bertambah sehingga 15 minit.
-- **Lupa PIN?** Tekan butang tu di skrin kunci untuk kosongkan peranti. Data di Google selamat, tapi kau perlu masukkan URL Web App dan kunci rahsia semula, dan perubahan yang belum dihantar akan hilang.
+- App dikunci setiap kali dibuka, selepas tidak digunakan (1 hingga 30 minit, lalai 5), dan bila anda tekan ikon kunci di sidebar.
+- Screenshot yang dikongsi tetap dihantar ke Google walaupun app terkunci, tapi anda perlu PIN untuk melihatnya.
+- Selepas 5 kali salah, anda perlu tunggu 30 saat, dan tempoh ini bertambah sehingga 15 minit.
+- **Lupa PIN?** Tekan butang itu di skrin kunci untuk kosongkan peranti. Data di Google selamat, tapi anda perlu masukkan URL Web App dan kunci rahsia semula, dan perubahan yang belum dihantar akan hilang.
 - PIN menghalang orang yang memegang peranti daripada membuka app dengan mudah. Ia bukan penyulitan, jadi kunci skrin phone masih perlu dipasang, dan jangan isi tetapan di komputer yang dikongsi.
 
 ## Had Tonton
@@ -157,9 +157,9 @@ Yang perlu tahu:
 | Masalah | Sebab biasa | Cara betulkan |
 |---|---|---|
 | `Failed to fetch` atau "Belum sampai" berterusan | Web App bukan "Anyone" | Semak tetapan deployment |
-| "Kunci rahsia salah" | Tersalah salin kunci | Jalankan `setup` semula untuk tengok kunci dalam log |
+| "Kunci rahsia salah" | Tersalah salin kunci | Jalankan `setup` semula untuk lihat kunci dalam log |
 | "Backend Google masih versi lama" | Kod baru belum di-deploy | Ikut **Kemas kini backend** di atas |
-| Link pendek tak dapat dimainkan | Kebenaran baru belum diberi | Tampal `appsscript.json` baru, jalankan `setup`, dan benarkan |
+| Link pendek tidak dapat dimainkan | Kebenaran baru belum diberi | Tampal `appsscript.json` baru, jalankan `setup`, dan benarkan |
 | SimpanIdea tiada dalam senarai Share | App cuma jadi pintasan, bukan dipasang | Buang dari home screen dan pasang semula guna Chrome |
 
 Kalau kunci rahsia terdedah, jalankan fungsi `rotateSecret` dan masukkan kunci baru dalam app.
@@ -176,4 +176,4 @@ node tools/dev-server.js
 
 Pelayan ujian menjalankan `Code.gs` dengan tiruan Google di <http://localhost:5173>, jadi tiada data sebenar disentuh. Kunci tiruan ada di `/mock-state`, dan URL backendnya ialah `http://localhost:5173/mock-exec`.
 
-Butang Share sebenar, sentuhan kat skrin phone, kamera, Google sebenar serta video TikTok dan Facebook hanya boleh disahkan kat phone kau.
+Butang Share sebenar, sentuhan di skrin phone, kamera, Google sebenar serta video TikTok dan Facebook hanya boleh disahkan di phone anda.

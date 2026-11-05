@@ -1,5 +1,5 @@
 // Panel Tanya AI. Boleh dibuka dari mana-mana halaman, atau dari satu rekod termasuk gambarnya.
-// Kunci API disimpan di backend sahaja, dan tak pernah dibaca semula oleh app.
+// Kunci API disimpan di backend sahaja, dan tidak pernah dibaca semula oleh app.
 import { addItems, callBackend, firstColumnId, isConfigured, newId, newItem, state, writeRecord } from '../lib/data.js';
 import { buildAiContext } from '../lib/ai-context.js';
 import { copyText, field, h, icon, openSheet, toast } from '../lib/dom.js';
@@ -12,9 +12,9 @@ const MODELS = [
   { id: 'claude-sonnet-5-5', label: 'Sonnet 5.5, seimbang' },
   { id: 'claude-haiku-5-5', label: 'Haiku 5.5, paling murah' }
 ];
-const GENERAL_SUGGESTIONS = ['Apa patut aku buat dulu hari ni?', 'Ringkaskan Inbox aku', 'Kelas mana yang aku belum habis?'];
-const IMAGE_SUGGESTIONS = ['Huraikan screenshot ni', 'Apa isi penting dalam gambar ni?', 'Cadangkan soalan berkaitan', 'Jadikan langkah-langkah yang boleh aku buat'];
-const ITEM_SUGGESTIONS = ['Huraikan item ni', 'Apa langkah seterusnya?', 'Cadangkan soalan berkaitan'];
+const GENERAL_SUGGESTIONS = ['Apa patut saya buat dahulu hari ini?', 'Ringkaskan Inbox saya', 'Kelas mana yang saya belum habis?'];
+const IMAGE_SUGGESTIONS = ['Huraikan screenshot ini', 'Apa isi penting dalam gambar ini?', 'Cadangkan soalan berkaitan', 'Jadikan langkah-langkah yang boleh saya buat'];
+const ITEM_SUGGESTIONS = ['Huraikan item ini', 'Apa langkah seterusnya?', 'Cadangkan soalan berkaitan'];
 
 let messages = [];
 let focus = null;
@@ -35,7 +35,7 @@ export function currentModel() {
     const saved = localStorage.getItem(MODEL_KEY);
     if (MODELS.some((model) => model.id === saved)) return saved;
   } catch {
-    // Guna model lalai kalau storan tak dapat dibaca.
+    // Guna model lalai kalau storan tidak dapat dibaca.
   }
   return MODELS[0].id;
 }
@@ -133,10 +133,10 @@ function drawChat() {
     const hasImage = focus && focus.imageIds.length;
     const suggestions = focus ? (hasImage ? IMAGE_SUGGESTIONS : ITEM_SUGGESTIONS) : GENERAL_SUGGESTIONS;
     children.push(h('div', { class: 'ai-intro' },
-      h('h3', {}, focus ? 'Tanya tentang item ni' : 'Tanya apa saja'),
+      h('h3', {}, focus ? 'Tanya tentang item ini' : 'Tanya apa saja'),
       h('p', {}, focus
-        ? (hasImage ? 'AI boleh tengok gambar ni dan menjawab berdasarkannya.' : 'AI akan menjawab berdasarkan item ni.')
-        : 'Soalan umum, atau tentang simpanan kau.'),
+        ? (hasImage ? 'AI boleh lihat gambar ini dan menjawab berdasarkannya.' : 'AI akan menjawab berdasarkan item ini.')
+        : 'Soalan umum, atau tentang simpanan anda.'),
       h('div', { class: 'ai-suggestions' }, suggestions.map((text) => h('button', {
         class: 'ai-suggestion',
         type: 'button',
@@ -200,14 +200,14 @@ function drawCompose() {
           checked: useData,
           onchange: (event) => { useData = event.target.checked; }
         }),
-        'Guna simpanan aku'),
+        'Guna simpanan saya'),
       h('select', {
         'aria-label': 'Model AI',
         onchange: (event) => {
           try {
             localStorage.setItem(MODEL_KEY, event.target.value);
           } catch {
-            // Pilihan cuma tak diingat untuk lain kali.
+            // Pilihan cuma tidak diingat untuk lain kali.
           }
         }
       }, MODELS.map((model) => h('option', { value: model.id, selected: model.id === currentModel() }, model.label)))));
@@ -239,12 +239,12 @@ async function ask(text) {
       aiConfigured = false;
       reply = { role: 'assistant', error: result.error };
     } else if (result.code === 'bad_request' && /Tindakan/.test(result.error)) {
-      reply = { role: 'assistant', error: 'Backend Google perlu dikemas kini dulu. Tengok amaran di bahagian atas app.' };
+      reply = { role: 'assistant', error: 'Backend Google perlu dikemas kini dahulu. Lihat amaran di bahagian atas app.' };
     } else {
       reply = { role: 'assistant', error: result.error };
     }
   } catch {
-    reply = { role: 'assistant', error: 'Tak dapat sampai ke Google. Semak internet, atau soalan mungkin mengambil masa terlalu lama.' };
+    reply = { role: 'assistant', error: 'Tidak dapat sampai ke Google. Semak internet, atau soalan mungkin mengambil masa terlalu lama.' };
   }
   messages.push(reply);
   busy = false;
@@ -271,14 +271,14 @@ function keyForm(onSaved) {
           onSaved();
           return;
         }
-        toast(/Tindakan/.test(result.error) ? 'Backend Google perlu dikemas kini dulu' : result.error, true);
+        toast(/Tindakan/.test(result.error) ? 'Backend Google perlu dikemas kini dahulu' : result.error, true);
       } catch {
-        toast('Tak dapat sampai ke Google', true);
+        toast('Tidak dapat sampai ke Google', true);
       }
       submit.disabled = false;
       submit.textContent = 'Simpan kunci';
     }
-  }, field('Kunci API Anthropic', input, 'Disimpan dalam Google Apps Script kau, dan tak disimpan dalam peranti ini.'), submit);
+  }, field('Kunci API Anthropic', input, 'Disimpan dalam Google Apps Script anda, dan tidak disimpan dalam peranti ini.'), submit);
 }
 
 function setupSteps() {
@@ -305,7 +305,7 @@ export function renderAiSettings() {
     section.replaceChildren(h('h2', {}, 'Tanya AI'));
     if (aiConfigured === true) {
       section.append(
-        h('p', { class: 'field-hint section-hint' }, 'Kunci API Anthropic tersimpan di Google Apps Script kau. Setiap soalan dicaj kepada akaun API kau.'),
+        h('p', { class: 'field-hint section-hint' }, 'Kunci API Anthropic tersimpan di Google Apps Script anda. Setiap soalan dicaj kepada akaun API anda.'),
         h('div', { class: 'button-row' },
           h('button', { class: 'button', type: 'button', onclick: () => openAi() }, icon('sparkle'), 'Buka Tanya AI'),
           h('button', {
@@ -319,7 +319,7 @@ export function renderAiSettings() {
                 draw();
                 toast('Kunci API dibuang');
               } catch (err) {
-                toast('Tak dapat buang kunci: ' + err.message, true);
+                toast('Tidak dapat buang kunci: ' + err.message, true);
               }
             }
           }, 'Buang kunci')));
@@ -343,13 +343,13 @@ export function askAiButton(getFocus) {
 function drawPanelBody(body) {
   if (!isConfigured()) {
     body.replaceChildren(h('div', { class: 'ai-setup' },
-      h('p', {}, 'Sambungkan app ke Google dulu di Tetapan.'),
+      h('p', {}, 'Sambungkan app ke Google dahulu di Tetapan.'),
       h('a', { class: 'button primary', href: '#settings' }, 'Buka Tetapan')));
     return;
   }
   if (aiConfigured === false) {
     body.replaceChildren(h('div', { class: 'ai-setup' },
-      h('p', {}, 'Masukkan kunci API Anthropic kau untuk mula bertanya.'),
+      h('p', {}, 'Masukkan kunci API Anthropic anda untuk mula bertanya.'),
       setupSteps(),
       keyForm(() => drawPanelBody(body))));
     return;
@@ -361,7 +361,7 @@ function drawPanelBody(body) {
   drawCompose();
 }
 
-/** Buka panel. Kalau item lain dipilih, perbualan bermula semula supaya jawapan tak bercampur. */
+/** Buka panel. Kalau item lain dipilih, perbualan bermula semula supaya jawapan tidak bercampur. */
 export async function openAi({ focus: newFocus } = {}) {
   if (newFocus) {
     if (!focus || focus.text !== newFocus.text) messages = [];

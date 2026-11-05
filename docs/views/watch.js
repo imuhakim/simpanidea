@@ -80,13 +80,13 @@ function drawStage(entry, video, player, loading) {
         sandbox: 'allow-scripts allow-same-origin allow-popups allow-presentation'
       }));
   } else {
-    screen = h('div', { class: 'stage-screen' }, 'Video ini tak dapat dimainkan di sini. Buka dalam app asal.');
+    screen = h('div', { class: 'stage-screen' }, 'Video ini tidak dapat dimainkan di sini. Buka dalam app asal.');
   }
   stage.replaceChildren(screen,
     h('div', { class: 'stage-info' },
       h('h2', { class: 'stage-title' }, titleOf(entry)),
       openLink,
-      !loading && h('p', { class: 'stage-hint' }, 'Kalau video tak keluar, pemiliknya mungkin menghalang tontonan di luar ' + PLATFORM_LABEL[video.platform] + '.')));
+      !loading && h('p', { class: 'stage-hint' }, 'Kalau video tidak keluar, pemiliknya mungkin menghalang tontonan di luar ' + PLATFORM_LABEL[video.platform] + '.')));
 }
 
 async function play(entry, video) {

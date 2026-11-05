@@ -53,7 +53,7 @@ test('backend yang belum setup menolak permintaan', () => {
   assert.equal(harness.post(JSON.stringify({ secret: null, action: 'ping' })).code, 'not_setup');
 });
 
-test('JSON rosak dan tindakan tak dikenali ditolak dengan kemas', () => {
+test('JSON rosak dan tindakan tidak dikenali ditolak dengan kemas', () => {
   const { harness, call } = ready();
   assert.equal(harness.post('bukan json').ok, false);
   assert.equal(call({ action: 'lain' }).code, 'bad_request');
@@ -179,7 +179,7 @@ test('saveRecord pada Item hanya mengubah lajur yang dibenarkan', () => {
   assert.equal(after.jenis, 'image');
 });
 
-test('saveRecord tidak mencipta Item baru dan menolak nilai tak sah', () => {
+test('saveRecord tidak mencipta Item baru dan menolak nilai tidak sah', () => {
   const { save, call, list } = ready();
   assert.equal(call({ action: 'saveRecord', table: 'Item', record: { id: 'tiada-0001', tajuk: 'x' } }).code, 'not_found');
   save(image);
@@ -228,7 +228,7 @@ test('papan bermula dengan 3 lajur, boleh tambah lajur dan alih kad', () => {
 test('kelas menyimpan data dan hanya menerima status sah', () => {
   const { call, list } = ready();
   const save = (record) => call({ action: 'saveRecord', table: 'Kelas', record });
-  assert.equal(save({ id: 'kelas-001', nama: 'Canva', url: 'https://kelas.my/a', username: 'aku', password_sulit: 'v1.abc.def', status: 'belum' }).ok, true);
+  assert.equal(save({ id: 'kelas-001', nama: 'Canva', url: 'https://kelas.my/a', username: 'saya', password_sulit: 'v1.abc.def', status: 'belum' }).ok, true);
   assert.equal(save({ id: 'kelas-001', status: 'tengah', terakhir_dibuka: '2026-11-04T01:00:00Z' }).ok, true);
   const [kelas] = list().Kelas;
   assert.equal(kelas.status, 'tengah');
@@ -303,7 +303,7 @@ test('listAll melaporkan versi backend', () => {
 
 const GOOD_KEY = 'sk-ant-api03-' + 'a'.repeat(40);
 
-test('kunci AI disahkan, disimpan dan tak pernah dipulangkan', () => {
+test('kunci AI disahkan, disimpan dan tidak pernah dipulangkan', () => {
   const { harness, call } = ready();
   assert.equal(call({ action: 'aiStatus' }).configured, false);
   assert.equal(call({ action: 'saveAiKey', key: 'bukan-kunci' }).ok, false);
@@ -424,15 +424,15 @@ test('quickSave menyimpan gambar mengikut jenis fail sebenar', () => {
 test('quickSave mengenal link dan nota dari teks', () => {
   const { call, list } = ready();
   call({ action: 'quickSave', text: 'https://contoh.my/a' });
-  call({ action: 'quickSave', text: 'Tengok ni https://youtu.be/abc best' });
+  call({ action: 'quickSave', text: 'Lihat ini https://youtu.be/abc best' });
   call({ action: 'quickSave', text: '  Idea jual kopi  ' });
   const [first, second, third] = list().Item;
   assert.deepEqual([first.jenis, first.url, first.nota], ['link', 'https://contoh.my/a', '']);
-  assert.deepEqual([second.jenis, second.url, second.nota], ['link', 'https://youtu.be/abc', 'Tengok ni https://youtu.be/abc best']);
+  assert.deepEqual([second.jenis, second.url, second.nota], ['link', 'https://youtu.be/abc', 'Lihat ini https://youtu.be/abc best']);
   assert.deepEqual([third.jenis, third.nota], ['note', 'Idea jual kopi']);
 });
 
-test('quickSave menolak kandungan tak sah dan kunci salah', () => {
+test('quickSave menolak kandungan tidak sah dan kunci salah', () => {
   const { harness, call, list } = ready();
   const html = Buffer.from('<html>').toString('base64');
   assert.equal(call({ action: 'quickSave', image: html }).ok, false);
@@ -543,7 +543,7 @@ test('scanReceipt mengendalikan ralat dan tiada kunci', () => {
   harness.state.anthropic = () => ({ code: 200, body: { stop_reason: 'max_tokens', content: [] } });
   assert.match(call(scan()).error, /terlalu panjang/);
   harness.state.anthropic = () => ({ code: 200, body: { stop_reason: 'end_turn', content: [{ type: 'text', text: 'bukan json' }] } });
-  assert.match(call(scan()).error, /tak dapat dibaca/);
+  assert.match(call(scan()).error, /tidak dapat dibaca/);
   harness.state.anthropic = () => ({ code: 529, body: {} });
   assert.match(call(scan()).error, /sibuk/);
   assert.equal(harness.post(JSON.stringify({ secret: 'salah', ...scan() })).code, 'unauthorized');

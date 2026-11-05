@@ -71,7 +71,7 @@ export async function scanReceipt(id) {
   const receipt = findRecord('Resit', id);
   if (!receipt || !receipt.gambar || scanning.has(id)) return;
   if (!isConfigured()) {
-    toast('Sambungkan ke Google dulu di Tetapan', true);
+    toast('Sambungkan ke Google dahulu di Tetapan', true);
     return;
   }
   scanning.add(id);
@@ -105,11 +105,11 @@ export async function scanReceipt(id) {
       toast('Masukkan kunci API di Tetapan untuk imbas resit', true);
     } else {
       await writeRecord('Resit', { id, status_imbas: 'gagal' });
-      toast(/Tindakan/.test(result.error) ? 'Backend Google perlu dikemas kini dulu' : result.error, true);
+      toast(/Tindakan/.test(result.error) ? 'Backend Google perlu dikemas kini dahulu' : result.error, true);
     }
   } catch (err) {
     await writeRecord('Resit', { id, status_imbas: 'gagal' });
-    toast(err instanceof TypeError ? 'Tak dapat sampai ke Google' : err.message, true);
+    toast(err instanceof TypeError ? 'Tidak dapat sampai ke Google' : err.message, true);
   } finally {
     scanning.delete(id);
     render();
@@ -136,7 +136,7 @@ export function openReceiptAdd() {
   dialog = openModal({
     title: 'Tambah resit',
     body: [
-      h('p', { class: 'form-note' }, 'AI akan baca resit dan isikan datanya untuk kau.'),
+      h('p', { class: 'form-note' }, 'AI akan baca resit dan isikan datanya untuk anda.'),
       h('div', { class: 'button-row' }, photoButtons((files) => {
         dialog.close();
         addReceiptFiles(files);
@@ -174,7 +174,7 @@ export function renderReceipts() {
     h('div', { class: 'page-head' },
       h('p', { class: 'page-note' }, 'Ambil gambar resit, dan AI isikan peniaga, tarikh, jumlah dan barangan.'),
       h('div', { class: 'button-row' }, photoButtons(addReceiptFiles))),
-    !receipts.length && emptyState('Belum ada resit', 'Ambil gambar resit pertama kau. Imbasan perlukan kunci API di Tetapan.'),
+    !receipts.length && emptyState('Belum ada resit', 'Ambil gambar resit pertama anda. Imbasan perlukan kunci API di Tetapan.'),
     [...months].map(([key, list]) => [
       h('h2', { class: 'section-label' }, monthLabel(key),
         h('span', { class: 'count' }, String(list.length)),
@@ -233,14 +233,14 @@ export function openReceipt(id) {
   const category = h('select', { class: 'input' },
     h('option', { value: '', selected: !receipt.kategori }, 'Pilih kategori'),
     categoryOptions.map((name) => h('option', { value: name, selected: name === receipt.kategori }, name)));
-  const note = h('textarea', { class: 'input', rows: 3, value: receipt.nota || '', placeholder: 'Catatan kau' });
+  const note = h('textarea', { class: 'input', rows: 3, value: receipt.nota || '', placeholder: 'Catatan anda' });
   const items = itemsEditor(parseItems(receipt.barangan));
 
   const frame = h('button', { class: 'sheet-image', type: 'button', 'aria-label': 'Besarkan resit', onclick: () => openImage(receipt.gambar, 'Resit') });
   if (receipt.gambar) {
     imageUrlFor(receipt.gambar)
       .then((url) => frame.append(h('img', { src: url, alt: 'Gambar resit' })))
-      .catch(() => { frame.textContent = 'Gambar tak dapat dimuat.'; });
+      .catch(() => { frame.textContent = 'Gambar tidak dapat dimuat.'; });
   }
 
   let dialog;

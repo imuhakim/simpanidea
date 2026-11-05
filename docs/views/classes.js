@@ -1,4 +1,4 @@
-// Kelas online: link, akaun, password disulitkan, dan rekod sama ada dah dibuka atau belum.
+// Kelas online: link, akaun, password disulitkan, dan rekod sama ada sudah dibuka atau belum.
 import { findRecord, idList, newId, state, writeRecord } from '../lib/data.js';
 import { copyText, domainOf, emptyState, field, formatDate, formatRelative, h, icon, isWebUrl, openModal, openSheet, toast } from '../lib/dom.js';
 import { attachmentEditor } from '../lib/images.js';
@@ -6,7 +6,7 @@ import { manageButtons } from './manage.js';
 import { askAiButton } from './ai.js';
 import { createVault, decrypt, encrypt, unlockVault } from '../lib/vault.js';
 
-const STATUS_LABEL = { belum: 'Belum buka', tengah: 'Tengah belajar', siap: 'Dah siap' };
+const STATUS_LABEL = { belum: 'Belum buka', tengah: 'Sedang belajar', siap: 'Sudah siap' };
 const VAULT_ID = 'peti-password';
 const AUTO_LOCK_MS = 15 * 60 * 1000;
 const MIN_PASSPHRASE = 8;
@@ -61,7 +61,7 @@ function askPassphrase({ title, intro, confirm, submitLabel, verify }) {
             return;
           }
           if (confirm && first.value !== second.value) {
-            showError('Kedua-dua kata laluan tak sama.');
+            showError('Kedua-dua kata laluan tidak sama.');
             return;
           }
           submit.disabled = true;
@@ -106,14 +106,14 @@ async function ensureVault() {
       verify: (passphrase) => unlockVault(passphrase, record)
     });
   } else {
-    // Peti mungkin dah wujud di Google tapi belum dimuat; mencipta yang baru akan menggantinya.
+    // Peti mungkin sudah wujud di Google tapi belum dimuat; mencipta yang baru akan menggantinya.
     if (!state.lastSync) {
-      toast('Tunggu data dari Google dimuat dulu', true);
+      toast('Tunggu data dari Google dimuat dahulu', true);
       return null;
     }
     vaultKey = await askPassphrase({
       title: 'Cipta kata laluan induk',
-      intro: 'Password kelas akan disulitkan dengan kata laluan ini sebelum disimpan. Kalau kau lupa, password yang tersimpan tak boleh dipulihkan. Jangan guna kata laluan Google atau bank.',
+      intro: 'Password kelas akan disulitkan dengan kata laluan ini sebelum disimpan. Kalau anda lupa, password yang tersimpan tidak boleh dipulihkan. Jangan guna kata laluan Google atau bank.',
       confirm: true,
       submitLabel: 'Cipta',
       verify: async (passphrase) => {
@@ -169,8 +169,8 @@ export function renderClasses() {
   const tabs = [
     ['semua', 'Semua', classes.length],
     ['belum', 'Belum buka', count('belum')],
-    ['tengah', 'Tengah belajar', count('tengah')],
-    ['siap', 'Dah siap', count('siap')]
+    ['tengah', 'Sedang belajar', count('tengah')],
+    ['siap', 'Sudah siap', count('siap')]
   ];
   const shown = filter === 'semua' ? classes : classes.filter((kelas) => (kelas.status || 'belum') === filter);
 
@@ -199,7 +199,7 @@ export function renderClasses() {
       }
     }, label, h('span', { class: 'count' }, String(total))))),
     classes.length === 0
-      ? emptyState('Belum ada kelas', 'Simpan link, akaun dan password kelas online kau di sini.')
+      ? emptyState('Belum ada kelas', 'Simpan link, akaun dan password kelas online anda di sini.')
       : shown.length === 0
         ? emptyState('Tiada kelas', 'Tiada kelas dalam kategori ini.')
         : h('div', { class: 'rows' }, shown.map(classRow)));
@@ -247,7 +247,7 @@ function passwordField(kelas) {
       unlocked = true;
       drawOpen();
     } catch {
-      toast('Password ini tak dapat dibuka', true);
+      toast('Password ini tidak dapat dibuka', true);
     }
   }
 

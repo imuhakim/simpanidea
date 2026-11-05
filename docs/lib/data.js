@@ -184,7 +184,7 @@ export async function refresh() {
       syncDerived();
       state.lastSync = new Date();
       state.syncError = '';
-      // Backend lama masih boleh dibaca, tapi tak dapat menyimpan arkib dan sampah.
+      // Backend lama masih boleh dibaca, tapi tidak dapat menyimpan arkib dan sampah.
       state.needsBackendUpdate = (result.version || 0) < REQUIRED_BACKEND_VERSION;
       state.checks.backend = { state: 'ok', label: 'Sambungan ke Google berjaya' };
       if (!state.needsBackendUpdate) purgeOldTrash();
@@ -197,8 +197,8 @@ export async function refresh() {
       state.checks.backend = { state: 'fail', label: result.error };
     }
   } catch (err) {
-    state.syncError = 'Tak dapat sampai ke Google';
-    state.checks.backend = { state: 'fail', label: 'Tak dapat sampai ke Google (' + err.message + ')' };
+    state.syncError = 'Tidak dapat sampai ke Google';
+    state.checks.backend = { state: 'fail', label: 'Tidak dapat sampai ke Google (' + err.message + ')' };
   } finally {
     state.refreshing = false;
     render();
@@ -321,7 +321,7 @@ export function itemFromText(raw, fields = {}) {
   return newItem({ type: 'note', text, ...fields });
 }
 
-/** Gambar dikecilkan dan disimpan dalam peranti dulu, supaya terus boleh dilihat. */
+/** Gambar dikecilkan dan disimpan dalam peranti dahulu, supaya terus boleh dilihat. */
 export async function imageItem(file, fields = {}) {
   const blob = await compressImage(file);
   const item = newItem({ type: 'image', blob, ready: true, title: file.name || '', ...fields });

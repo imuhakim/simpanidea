@@ -8,11 +8,11 @@ const newestFirst = (a, b) => String(b.dicipta).localeCompare(String(a.dicipta))
 const archivedMark = (record) => (record.keadaan === 'arkib' ? ' [arkib]' : '');
 const line = (...parts) => '- ' + parts.filter(Boolean).join(' | ');
 
-const STATUS_LABEL = { belum: 'belum buka', tengah: 'tengah belajar', siap: 'dah siap' };
+const STATUS_LABEL = { belum: 'belum buka', tengah: 'sedang belajar', siap: 'sudah siap' };
 const PLACE_LABEL = { info: 'info penting' };
 
 function itemLine(item) {
-  // Isi Info Penting tak dihantar kecuali pengguna bertanya dari rekod tersebut.
+  // Isi Info Penting tidak dihantar kecuali pengguna bertanya dari rekod tersebut.
   if (item.ruang === 'info') return line((item.jenis || 'item') + archivedMark(item), PLACE_LABEL.info, clip(item.tajuk));
   return line(
     (item.jenis || 'item') + archivedMark(item),
@@ -21,7 +21,7 @@ function itemLine(item) {
     clip(item.nota),
     clip(item.url),
     String(item.dicipta || '').slice(0, 10),
-    item.status === 'dilihat' ? 'dah dilihat' : 'belum dilihat');
+    item.status === 'dilihat' ? 'sudah dilihat' : 'belum dilihat');
 }
 
 export function buildAiContext(tables, { today, view }) {
@@ -65,7 +65,7 @@ export function buildAiContext(tables, { today, view }) {
     'SIMPANAN (terbaru dahulu)'
   ].join('\n');
 
-  // Simpanan paling banyak, jadi ia yang dipotong dulu, bermula dari yang paling lama.
+  // Simpanan paling banyak, jadi ia yang dipotong dahulu, bermula dari yang paling lama.
   let text = head;
   const items = (tables.Item || [])
     .filter((item) => !inTrash(item) && item.ruang !== 'lampiran')

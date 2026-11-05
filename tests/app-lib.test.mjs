@@ -23,7 +23,7 @@ test('YouTube dikenali dari semua bentuk link biasa', () => {
   }
 });
 
-test('TikTok penuh terus boleh dimainkan, link pendek perlu diselesaikan dulu', () => {
+test('TikTok penuh terus boleh dimainkan, link pendek perlu diselesaikan dahulu', () => {
   const full = parseVideo('https://www.tiktok.com/@kedai/video/7300000000000000000?is_from_webapp=1');
   assert.equal(full.embedUrl, 'https://www.tiktok.com/embed/v2/7300000000000000000');
   assert.equal(full.vertical, true);
@@ -111,7 +111,7 @@ const contextTables = () => ({
   Item: [
     { id: 'a', jenis: 'note', tajuk: 'Idea kopi', nota: 'Jual kopi', dicipta: '2026-11-01T00:00:00Z', ruang: '', keadaan: '' },
     { id: 'b', jenis: 'link', tajuk: 'Artikel', url: 'https://contoh.my', dicipta: '2026-11-02T00:00:00Z', ruang: 'info', keadaan: 'arkib' },
-    { id: 'c', jenis: 'note', tajuk: 'Dah buang', nota: 'rahsia sampah', keadaan: 'sampah' },
+    { id: 'c', jenis: 'note', tajuk: 'Sudah buang', nota: 'rahsia sampah', keadaan: 'sampah' },
     { id: 'd', jenis: 'image', tajuk: 'lampiran.png', ruang: 'lampiran', keadaan: '' }
   ],
   Tugasan: [{ id: 't', tajuk: 'Bayar yuran', nota: '', siap: '', tarikh_akhir: '2026-11-10', keadaan: '' }],
@@ -121,7 +121,7 @@ const contextTables = () => ({
     { id: 'r', peniaga: 'Kedai Maju', tarikh: '2026-11-03', jumlah: '47.8', mata_wang: 'RM', kategori: 'Runcit', keadaan: '' },
     { id: 's', peniaga: 'Resit dibuang', jumlah: '9', keadaan: 'sampah' }
   ],
-  Kelas: [{ id: 'm', nama: 'Canva', url: 'https://kelas.my', username: 'aku@emel.my', password_sulit: 'v1.SULIT.SULIT', status: 'tengah', berhenti_di: 'Modul 3', nota: 'best', keadaan: '' }],
+  Kelas: [{ id: 'm', nama: 'Canva', url: 'https://kelas.my', username: 'saya@emel.my', password_sulit: 'v1.SULIT.SULIT', status: 'tengah', berhenti_di: 'Modul 3', nota: 'best', keadaan: '' }],
   Tetapan: [{ id: 'peti-password', nilai: 'RAHSIA-PETI' }]
 });
 
@@ -130,7 +130,7 @@ test('konteks AI mengandungi data berguna tanpa rahsia atau sampah', () => {
   for (const wanted of ['Idea kopi', 'Jual kopi', 'Bayar yuran', '2026-11-10', 'Reka logo', 'Nak buat', 'Canva', 'Modul 3', 'Artikel', 'arkib', '2026-11-04', 'Inbox', 'Kedai Maju', 'RM 47.8', 'Runcit']) {
     assert.ok(text.includes(wanted), wanted);
   }
-  for (const hidden of ['SULIT', 'aku@emel.my', 'RAHSIA-PETI', 'rahsia sampah', 'Dah buang', 'lampiran.png', 'Resit dibuang']) {
+  for (const hidden of ['SULIT', 'saya@emel.my', 'RAHSIA-PETI', 'rahsia sampah', 'Sudah buang', 'lampiran.png', 'Resit dibuang']) {
     assert.ok(!text.includes(hidden), hidden);
   }
 });

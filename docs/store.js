@@ -1,5 +1,5 @@
 // Storan peranti dalam IndexedDB, dikongsi antara halaman dan service worker.
-// queue: perubahan yang belum sampai ke Google. tables: salinan Sheet. images: gambar yang dah dimuat.
+// queue: perubahan yang belum sampai ke Google. tables: salinan Sheet. images: gambar yang sudah dimuat.
 const SimpanStore = (() => {
   const DB_NAME = 'simpanidea';
   const DB_VERSION = 3;

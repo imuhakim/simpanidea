@@ -89,7 +89,7 @@ export async function openImage(id, alt) {
   try {
     showLightbox(await imageUrlFor(id), alt);
   } catch {
-    toast('Gambar tak dapat dimuat', true);
+    toast('Gambar tidak dapat dimuat', true);
   }
 }
 

@@ -42,7 +42,7 @@ function taskRow(task) {
         const remaining = state.tables.Tugasan.filter((other) => other.siap !== 'ya' && other.id !== task.id).length;
         if (checked && !remaining) {
           celebrate(box.left + box.width / 2, box.top);
-          toast('Semua tugasan dah siap');
+          toast('Semua tugasan sudah siap');
         }
         setTimeout(() => writeRecord('Tugasan', { id: task.id, siap: checked ? 'ya' : '' }), 280);
       }
@@ -116,8 +116,8 @@ export function renderTasks() {
   return h('div', { class: 'page' },
     state.tables.Tugasan.length > 0 && progressCard(done.length, state.tables.Tugasan.length),
     form,
-    !open.length && !done.length && emptyState('Tiada tugasan', 'Tulis tugasan pertama kau di atas.'),
-    !open.length && done.length > 0 && emptyState('Semua dah siap', 'Tiada tugasan tertunggak.'),
+    !open.length && !done.length && emptyState('Tiada tugasan', 'Tulis tugasan pertama anda di atas.'),
+    !open.length && done.length > 0 && emptyState('Semua sudah siap', 'Tiada tugasan tertunggak.'),
     group('Lewat', open.filter((task) => task.tarikh_akhir && task.tarikh_akhir < today).sort(byDue), 'signal'),
     group('Hari ini', open.filter((task) => task.tarikh_akhir === today).sort(newest)),
     group('Akan datang', open.filter((task) => task.tarikh_akhir > today).sort(byDue)),
@@ -128,9 +128,9 @@ export function renderTasks() {
       onclick: (event) => {
         showDone = !showDone;
         event.target.closest('.page').querySelector('.done-list').hidden = !showDone;
-        event.target.closest('button').textContent = (showDone ? 'Sorok' : 'Tunjuk') + ' yang dah siap (' + done.length + ')';
+        event.target.closest('button').textContent = (showDone ? 'Sorok' : 'Tunjuk') + ' yang sudah siap (' + done.length + ')';
       }
-    }, (showDone ? 'Sorok' : 'Tunjuk') + ' yang dah siap (' + done.length + ')'),
+    }, (showDone ? 'Sorok' : 'Tunjuk') + ' yang sudah siap (' + done.length + ')'),
     h('div', { class: 'done-list', hidden: !showDone }, done.map(taskRow)));
 }
 

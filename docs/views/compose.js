@@ -7,7 +7,7 @@ export function openComposer({ text = '', ruang = '' } = {}) {
   const files = [];
   const previewUrls = new Map();
   const previews = h('div', { class: 'compose-previews' });
-  const textInput = h('textarea', { class: 'input', rows: 4, value: text, placeholder: 'Tampal link, atau tulis idea kau' });
+  const textInput = h('textarea', { class: 'input', rows: 4, value: text, placeholder: 'Tampal link, atau tulis idea anda' });
   const titleInput = h('input', { class: 'input', type: 'text', placeholder: 'Contoh: Resit servis kereta' });
   const titleField = field('Tajuk (ini sahaja yang kelihatan di Info Penting)', titleInput);
   const place = h('select', {
@@ -48,7 +48,7 @@ export function openComposer({ text = '', ruang = '' } = {}) {
   async function save() {
     const value = textInput.value.trim();
     if (!value && !files.length) {
-      toast('Tulis sesuatu atau tambah gambar dulu', true);
+      toast('Tulis sesuatu atau tambah gambar dahulu', true);
       return;
     }
     const chosenPlace = place.value;

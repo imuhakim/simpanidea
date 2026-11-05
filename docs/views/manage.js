@@ -29,7 +29,7 @@ export function trashWithUndo(table, id) {
   toast('Dialih ke Sampah', false, { label: 'Batal', onClick: () => restoreRecord(table, id) });
 }
 
-/** Pulihkan rekod. Kad yang lajurnya dah dipadam dimasukkan ke lajur pertama. */
+/** Pulihkan rekod. Kad yang lajurnya sudah dipadam dimasukkan ke lajur pertama. */
 export function restoreRecord(table, id) {
   const fields = { id, keadaan: '', dibuang_pada: '' };
   if (table === 'Kad') {
@@ -97,7 +97,7 @@ async function moveTo(destination, table, id, overrides, columnId) {
       ruang: destination === 'info' ? 'info' : ''
     })]);
   }
-  // Rekod asal dibuang kerana isinya dah pindah. Gambar tak dibuang, cuma bertukar menjadi lampiran.
+  // Rekod asal dibuang kerana isinya sudah pindah. Gambar tidak dibuang, cuma bertukar menjadi lampiran.
   if (source.isImage) await writeRecord('Item', { id, ruang: 'lampiran', status: 'dilihat' });
   else await deleteRecord(table, id);
 }

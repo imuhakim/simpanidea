@@ -6,7 +6,7 @@ import { parseVideo } from '../lib/video.js';
 import { archiveWithUndo, manageButtons } from './manage.js';
 import { askAiButton } from './ai.js';
 
-// Info Penting berasingan dan tersorok, jadi isinya tak muncul di senarai lain.
+// Info Penting berasingan dan tersorok, jadi isinya tidak muncul di senarai lain.
 const notAttachment = (item) => item.ruang !== 'lampiran' && item.ruang !== 'info';
 const TYPE_LABEL = { image: 'Gambar', link: 'Link', note: 'Nota' };
 const TYPE_ICON = { image: 'image', link: 'link', note: 'note' };
@@ -15,11 +15,11 @@ export const LIBRARY_VIEWS = {
   inbox: {
     title: 'Inbox', icon: 'inbox', layout: 'rows',
     filter: (item) => item.ruang === '' && item.status !== 'dilihat',
-    empty: ['Inbox kosong', 'Tekan Share kat phone dan pilih SimpanIdea, atau tampal dengan Ctrl+V di sini.']
+    empty: ['Inbox kosong', 'Tekan Share di phone dan pilih SimpanIdea, atau tampal dengan Ctrl+V di sini.']
   },
   all: {
     title: 'Semua', icon: 'all', layout: 'rows', filter: notAttachment,
-    empty: ['Belum ada apa-apa', 'Screenshot, link dan nota yang kau simpan akan ada di sini.']
+    empty: ['Belum ada apa-apa', 'Screenshot, link dan nota yang anda simpan akan ada di sini.']
   },
   image: {
     title: 'Screenshot', icon: 'image', layout: 'gallery',
@@ -34,12 +34,12 @@ export const LIBRARY_VIEWS = {
   note: {
     title: 'Nota', icon: 'note', layout: 'notes',
     filter: (item) => item.type === 'note' && notAttachment(item),
-    empty: ['Belum ada nota', 'Tekan Tambah untuk tulis idea kau.']
+    empty: ['Belum ada nota', 'Tekan Tambah untuk tulis idea anda.']
   },
   info: {
     title: 'Info Penting', icon: 'info', layout: 'hidden',
     filter: (item) => item.ruang === 'info',
-    empty: ['Belum ada info penting', 'Ambil gambar resit, kad, tiket atau apa saja yang kau perlu rujuk semula.']
+    empty: ['Belum ada info penting', 'Ambil gambar resit, kad, tiket atau apa saja yang anda perlu rujuk semula.']
   }
 };
 for (const [key, view] of Object.entries(LIBRARY_VIEWS)) view.render = () => renderLibrary(key);
@@ -92,10 +92,10 @@ export function itemRow(item, { markable = false, showUnread = false } = {}) {
       h('button', {
         class: 'icon-button',
         type: 'button',
-        'aria-label': 'Tanda dah tengok: ' + displayTitle(item),
-        title: 'Tanda dah tengok',
+        'aria-label': 'Tanda sudah dilihat: ' + displayTitle(item),
+        title: 'Tanda sudah dilihat',
         onclick: (event) => {
-          // Baris meluncur keluar dulu sebelum senarai dilukis semula.
+          // Baris meluncur keluar dahulu sebelum senarai dilukis semula.
           event.currentTarget.closest('.row').classList.add('leaving');
           setTimeout(() => patchItem(item.id, { status: 'dilihat' }), 200);
         }
@@ -244,7 +244,7 @@ export function renderLibrary(key) {
 
   if (key === 'info') {
     children.push(h('div', { class: 'page-head' },
-      h('p', { class: 'page-note' }, 'Hanya tajuk kelihatan. Tekan ikon mata untuk tengok isi.'),
+      h('p', { class: 'page-note' }, 'Hanya tajuk kelihatan. Tekan ikon mata untuk lihat isi.'),
       h('div', { class: 'button-row' }, photoButtons(saveInfoPhotos))));
   }
 
@@ -255,7 +255,7 @@ export function renderLibrary(key) {
   if (!queued.length && !items.length) {
     children.push(isConfigured() || key === 'info'
       ? emptyState(view.empty[0], view.empty[1])
-      : emptyState('Sambungkan ke Google dulu', 'Masukkan URL Web App dan kunci rahsia supaya data kau boleh disimpan.',
+      : emptyState('Sambungkan ke Google dahulu', 'Masukkan URL Web App dan kunci rahsia supaya data anda boleh disimpan.',
         h('a', { class: 'button primary', href: '#settings' }, 'Buka Tetapan')));
   } else if (view.layout === 'gallery') {
     children.push(h('div', { class: 'gallery' }, items.map(galleryTile)));
@@ -276,7 +276,7 @@ export function renderLibrary(key) {
 async function saveInfoPhotos(files) {
   try {
     // Tajuk sahaja yang kelihatan di sini, jadi minta terus masa menyimpan.
-    const title = await askText({ title: 'Tajuk untuk gambar ni', label: 'Tajuk', confirmLabel: 'Simpan' });
+    const title = await askText({ title: 'Tajuk untuk gambar ini', label: 'Tajuk', confirmLabel: 'Simpan' });
     if (title === null) return;
     await addItems(await Promise.all(files.map((file) => imageItem(file, { ruang: 'info', title }))));
   } catch (err) {
@@ -304,7 +304,7 @@ export function openItem(id) {
     const frame = h('button', { class: 'sheet-image', type: 'button', 'aria-label': 'Besarkan gambar', onclick: () => openImage(item.id, displayTitle(item)) });
     imageUrlFor(item.id)
       .then((url) => frame.append(h('img', { src: url, alt: displayTitle(item) })))
-      .catch(() => { frame.textContent = 'Gambar tak dapat dimuat.'; });
+      .catch(() => { frame.textContent = 'Gambar tidak dapat dimuat.'; });
     body.push(frame);
   }
   if (isWebUrl(item.url)) {
@@ -330,7 +330,7 @@ export function openItem(id) {
         patchItem(item.id, { status: isNew ? 'dilihat' : 'baru' });
         dialog.close();
       }
-    }, icon(isNew ? 'check' : 'undo'), isNew ? 'Tanda dah tengok' : 'Pulangkan ke Inbox')
+    }, icon(isNew ? 'check' : 'undo'), isNew ? 'Tanda sudah dilihat' : 'Pulangkan ke Inbox')
   ];
   body.push(h('div', { class: 'sheet-actions' }, quickActions));
   body.push(field('Tajuk', titleInput), field('Catatan', textInput), field('Simpan di', place));
