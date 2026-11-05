@@ -4,6 +4,7 @@ import { emptyState, field, formatDate, h, icon, openModal, openSheet, toast } f
 import { imageHolder, imageUrlFor, openImage, photoButtons } from '../lib/images.js';
 import { askAiButton, currentModel } from './ai.js';
 import { manageButtons } from './manage.js';
+import { applyAutoMatch, isPaidByTng, paymentSummary, receiptPaymentBlock, statementButton } from './payments.js';
 
 const CATEGORIES = ['Makanan', 'Runcit', 'Minyak', 'Pengangkutan', 'Utiliti', 'Perubatan', 'Pakaian', 'Kerja', 'Lain-lain'];
 const UPLOAD_WAIT_MS = 90000;
@@ -99,6 +100,7 @@ export async function scanReceipt(id) {
         barangan: JSON.stringify(data.barangan),
         status_imbas: 'siap'
       });
+      await applyAutoMatch();
       toast('Resit diimbas. Semak data sebelum bergantung padanya.');
     } else if (result.code === 'no_key') {
       await writeRecord('Resit', { id, status_imbas: '' });
@@ -150,7 +152,7 @@ export function openReceiptAdd() {
 function receiptRow(receipt) {
   const label = statusLabel(receipt);
   const busy = scanning.has(receipt.id);
-  const details = [receipt.kategori, receipt.tarikh].filter(Boolean).join(' · ');
+  const details = [receipt.kategori, receipt.tarikh, isPaidByTng(receipt.id) && "Touch 'n Go"].filter(Boolean).join(' · ');
   return h('article', { class: 'row receipt-row' + (busy ? ' scanning' : '') },
     h('button', { class: 'row-main', type: 'button', onclick: () => openReceipt(receipt.id) },
       receipt.gambar ? imageHolder(receipt.gambar, 'thumb') : h('span', { class: 'thumb' }, icon('receipt')),
@@ -173,7 +175,8 @@ export function renderReceipts() {
   return h('div', { class: 'page' },
     h('div', { class: 'page-head' },
       h('p', { class: 'page-note' }, 'Ambil gambar resit, dan AI isikan peniaga, tarikh, jumlah dan barangan.'),
-      h('div', { class: 'button-row' }, photoButtons(addReceiptFiles))),
+      h('div', { class: 'button-row' }, photoButtons(addReceiptFiles), statementButton())),
+    paymentSummary(),
     !receipts.length && emptyState('Belum ada resit', 'Ambil gambar resit pertama anda. Imbasan perlukan kunci API di Tetapan.'),
     [...months].map(([key, list]) => [
       h('h2', { class: 'section-label' }, monthLabel(key),
@@ -271,6 +274,7 @@ export function openReceipt(id) {
             text: 'Resit dari: ' + merchant.value + '\nTarikh: ' + date.value + '\nJumlah: ' + formatAmount(total.value, currency.value) + '\nCatatan: ' + note.value,
             imageIds: receipt.gambar ? [receipt.gambar] : []
           }))),
+        receiptPaymentBlock(id),
         field('Peniaga', merchant),
         h('div', { class: 'receipt-grid' }, field('Tarikh resit', date), field('Masa resit', time)),
         h('div', { class: 'receipt-grid' }, field('Jumlah', total), field('Mata wang', currency)),
@@ -297,7 +301,7 @@ export function openReceipt(id) {
             no_resit: number.value.trim(),
             barangan: items.value(),
             nota: note.value
-          });
+          }).then(applyAutoMatch);
           dialog.close();
         }
       }, 'Simpan')

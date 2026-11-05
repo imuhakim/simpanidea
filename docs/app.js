@@ -31,7 +31,9 @@ const NAV_GROUPS = [
   { label: 'Belajar', views: ['classes', 'watch'] },
   { label: 'Lain-lain', views: ['archive', 'trash', 'settings'] }
 ];
-const TAB_VIEWS = ['inbox', 'tasks', 'board', 'classes', 'watch'];
+const TAB_VIEWS = ['inbox', 'tasks', 'image', 'link', 'watch'];
+const PHONE_WIDTH = '(max-width: 760px)';
+const startView = () => (window.matchMedia(PHONE_WIDTH).matches ? 'image' : 'inbox');
 
 const $ = (id) => document.getElementById(id);
 
@@ -182,7 +184,7 @@ function renderAll() {
 
 function route() {
   const key = location.hash.slice(1);
-  state.view = VIEWS[key] ? key : 'inbox';
+  state.view = VIEWS[key] ? key : startView();
   hideAllInfo();
   closeMenu();
   document.querySelectorAll('dialog[open]:not(.lock)').forEach((dialog) => dialog.close());

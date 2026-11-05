@@ -1,6 +1,7 @@
 // Ringkasan simpanan untuk AI. Password, username, dan rekod dalam sampah sengaja tidak dimasukkan.
 const MAX_LENGTH = 60000;
 const FIELD_LENGTH = 400;
+const MAX_PAYMENTS = 200;
 
 const clip = (value) => String(value || '').replace(/\s+/g, ' ').trim().slice(0, FIELD_LENGTH);
 const inTrash = (record) => record.keadaan === 'sampah';
@@ -50,6 +51,17 @@ export function buildAiContext(tables, { today, view }) {
     clip(receipt.kategori),
     clip(receipt.nota)));
 
+  // Rujukan transaksi tidak diperlukan AI. Yang terbaru sahaja, supaya simpanan lain tidak terhimpit.
+  const payments = (tables.Bayaran || [])
+    .filter((payment) => !payment.keadaan)
+    .sort((a, b) => String(b.tarikh).localeCompare(String(a.tarikh)))
+    .slice(0, MAX_PAYMENTS)
+    .map((payment) => line(
+      clip(payment.keterangan || payment.jenis || 'Bayaran'),
+      payment.tarikh,
+      (payment.mata_wang || 'RM') + ' ' + payment.jumlah,
+      payment.resit_id ? 'ada resit' : 'tiada resit'));
+
   const head = [
     'Tarikh hari ini: ' + today,
     'Halaman yang sedang dibuka: ' + view,
@@ -61,6 +73,8 @@ export function buildAiContext(tables, { today, view }) {
     'KELAS ONLINE', ...classes,
     '',
     'RESIT', ...receipts,
+    '',
+    "BAYARAN TOUCH 'N GO", ...payments,
     '',
     'SIMPANAN (terbaru dahulu)'
   ].join('\n');

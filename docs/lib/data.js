@@ -6,11 +6,11 @@ const SETTINGS_KEY = 'simpanidea.settings';
 const MAX_IMAGE_EDGE = 2000;
 const IMAGE_QUALITY = 0.8;
 const KEEP_AS_IS = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const EMPTY_TABLES = () => ({ Item: [], Tugasan: [], Kad: [], Lajur: [], Kelas: [], Tetapan: [], Resit: [] });
+const EMPTY_TABLES = () => ({ Item: [], Tugasan: [], Kad: [], Lajur: [], Kelas: [], Tetapan: [], Resit: [], Bayaran: [] });
 const DATED_TABLES = new Set(['Tugasan', 'Kad', 'Kelas', 'Resit']);
 // Item ditulis dengan nama lajur Sheet, tapi dibaca dalam app dengan nama yang lebih mudah.
 const ITEM_FIELD_TO_COLUMN = { title: 'tajuk', text: 'nota', status: 'status', ruang: 'ruang', gambar: 'gambar' };
-const REQUIRED_BACKEND_VERSION = 4;
+const REQUIRED_BACKEND_VERSION = 5;
 const TRASH_DAYS = 30;
 export const TRASH_LIFETIME_DAYS = TRASH_DAYS;
 let purgedThisSession = false;
@@ -289,7 +289,7 @@ export async function compressImage(blob) {
   return compressed.size < blob.size || !KEEP_AS_IS.has(blob.type) ? compressed : blob;
 }
 
-function toBase64(blob) {
+export function toBase64(blob) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result).split(',')[1]);

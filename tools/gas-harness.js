@@ -56,7 +56,8 @@ function createHarness() {
       setFrozenRows() {},
       getLastRow: () => sheet.rows.length,
       getLastColumn: () => (sheet.rows[0] ? sheet.rows[0].length : 0),
-      getMaxRows: () => 1000,
+      getMaxRows: () => state.maxRows || 1000,
+      insertRowsAfter: (after, count) => { state.maxRows = (state.maxRows || 1000) + count; },
       deleteRow: (row) => { sheet.rows.splice(row - 1, 1); },
       appendRow(row) {
         if (state.failNextAppend) {

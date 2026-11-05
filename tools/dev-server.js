@@ -30,10 +30,20 @@ const FAKE_RECEIPT = {
   no_resit: 'INV-10293',
   barangan: [{ nama: 'Beras 5kg', kuantiti: 1, harga: 23.9 }, { nama: 'Telur gred A', kuantiti: 2, harga: 11.9 }]
 };
+const FAKE_STATEMENT = {
+  adakah_penyata: true,
+  transaksi: [
+    { tarikh: '2026-11-03', masa: '14:33', keterangan: 'KEDAI RUNCIT MAJU', jumlah: 47.8, arah: 'keluar', mata_wang: 'RM', rujukan: 'TNG-1001', jenis: 'DuitNow QR' },
+    { tarikh: '2026-11-02', masa: '08:10', keterangan: 'PLUS TOLL SUNGAI BESI', jumlah: 3.5, arah: 'keluar', mata_wang: 'RM', rujukan: 'TNG-1002', jenis: 'Tol' },
+    { tarikh: '2026-11-01', masa: '19:45', keterangan: 'RESTORAN SELERA', jumlah: 26, arah: 'keluar', mata_wang: 'RM', rujukan: 'TNG-1003', jenis: 'Bayaran' },
+    { tarikh: '2026-11-01', masa: '09:00', keterangan: 'Tambah nilai', jumlah: 100, arah: 'masuk', mata_wang: 'RM', rujukan: 'TNG-1004', jenis: 'Tambah nilai' }
+  ]
+};
+const fakeStructured = (data) => ({ stop_reason: 'end_turn', model: 'claude-opus-5-5', usage: { input_tokens: 900, output_tokens: 120 }, content: [{ type: 'text', text: JSON.stringify(data) }] });
 harness.state.anthropic = (url, options) => ({
   code: 200,
   body: url.endsWith('/messages') && JSON.parse(options.payload).output_config.format
-    ? { stop_reason: 'end_turn', model: 'claude-opus-5-5', usage: { input_tokens: 900, output_tokens: 120 }, content: [{ type: 'text', text: JSON.stringify(FAKE_RECEIPT) }] }
+    ? JSON.parse(options.payload).output_config.format.schema.properties.transaksi ? fakeStructured(FAKE_STATEMENT) : { stop_reason: 'end_turn', model: 'claude-opus-5-5', usage: { input_tokens: 900, output_tokens: 120 }, content: [{ type: 'text', text: JSON.stringify(FAKE_RECEIPT) }] }
     : url.endsWith('/messages')
     ? {
       stop_reason: 'end_turn',

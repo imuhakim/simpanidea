@@ -1310,6 +1310,23 @@ dialog::backdrop { background: var(--overlay); backdrop-filter: blur(3px); anima
 .receipt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .receipt-item { display: grid; grid-template-columns: minmax(0, 1fr) 62px 82px 34px; gap: 6px; align-items: center; margin-bottom: 6px; animation: rise .2s var(--ease); }
 .receipt-item .icon-button { width: 34px; height: 34px; }
+.payment-summary { display: flex; align-items: center; gap: 12px; width: 100%; margin-bottom: 16px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--raised); color: var(--ink); text-align: left; cursor: pointer; box-shadow: var(--shadow-1); transition: transform .15s var(--ease), box-shadow .15s var(--ease); }
+.payment-summary:hover { transform: translateY(-1px); box-shadow: var(--shadow-2); }
+.payment-summary > .icon { flex: none; color: var(--ink-3); }
+.payment-summary .row-text { flex: 1; min-width: 0; }
+.payment-line { display: flex; align-items: center; gap: 12px; }
+.payment-line .row-text { flex: 1; min-width: 0; }
+.payment-row { margin-bottom: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 13px; background: var(--raised); animation: rise .2s var(--ease); }
+.payment-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.payment-actions .button { min-width: 0; max-width: 100%; white-space: normal; text-align: left; }
+.payment-preview { display: grid; gap: 10px; max-height: 44dvh; margin-bottom: 12px; overflow-y: auto; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; }
+.payment-block { display: grid; justify-items: start; gap: 6px; margin-bottom: 14px; }
+.payment-block:empty { display: none; }
+.payment-block .button { max-width: 100%; white-space: normal; text-align: left; }
+.payment-paid { display: flex; align-items: center; gap: 6px; color: var(--good); font-size: 14px; font-weight: 700; }
+.payment-warning { color: var(--warn); }
+.payments-sheet .section-label { margin-top: 14px; }
+.payments-sheet .sheet-body > div > .button { margin-top: 6px; }
 @keyframes scan-line { to { transform: translateY(41px); } }
 @media (max-width: 760px) {
   .receipt-split { grid-template-columns: minmax(0, 1fr); }

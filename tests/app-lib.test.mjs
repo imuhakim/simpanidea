@@ -4,6 +4,7 @@ import test from 'node:test';
 import { parseVideo } from '../docs/lib/video.js';
 import { buildAiContext } from '../docs/lib/ai-context.js';
 import { createVault, decrypt, encrypt, unlockVault } from '../docs/lib/vault.js';
+import { autoMatches, dayGap, linkedReceipt, matchCandidates, paymentForReceipt, sameAmount } from '../docs/lib/payments.js';
 import { createPinRecord, isValidPin, isWeakPin, lockoutSeconds, verifyPin } from '../docs/lib/pin.js';
 
 test('YouTube dikenali dari semua bentuk link biasa', () => {
@@ -155,4 +156,56 @@ test('konteks AI dipendekkan bila data terlalu banyak, dan yang terbaru dikekalk
   assert.ok(text.includes('Nota 1999'));
   assert.ok(!text.includes('Nota 0 '));
   assert.ok(text.includes('Bayar yuran'));
+});
+
+const pay = (id, tarikh, jumlah, extra = {}) => ({ id, tarikh, jumlah: String(jumlah), mata_wang: 'RM', resit_id: '', padanan: '', ...extra });
+const rec = (id, tarikh, jumlah, extra = {}) => ({ id, tarikh, jumlah: String(jumlah), mata_wang: 'RM', keadaan: '', ...extra });
+
+test('sameAmount membandingkan jumlah dan mata wang', () => {
+  assert.equal(sameAmount(pay('p', '2026-11-03', 47.8), rec('r', '2026-11-03', '47.80')), true);
+  assert.equal(sameAmount(pay('p', '2026-11-03', 47.8), rec('r', '2026-11-03', 47.81)), false);
+  assert.equal(sameAmount(pay('p', '2026-11-03', 47.8), rec('r', '2026-11-03', 47.8, { mata_wang: 'USD' })), false);
+  assert.equal(sameAmount(pay('p', '2026-11-03', 47.8), rec('r', '2026-11-03', '')), false);
+  assert.equal(dayGap('2026-11-01', '2026-11-03'), 2);
+  assert.equal(dayGap('', '2026-11-03'), null);
+});
+
+test('autoMatches hanya memadankan bila tiada keraguan', () => {
+  assert.deepEqual(autoMatches([pay('p1', '2026-11-03', 10)], [rec('r1', '2026-11-03', 10)]), [{ paymentId: 'p1', receiptId: 'r1' }]);
+  // Tarikh hampir hanya jadi cadangan.
+  assert.deepEqual(autoMatches([pay('p1', '2026-11-03', 10)], [rec('r1', '2026-11-04', 10)]), []);
+  // Dua resit untuk satu bayaran, dan dua bayaran untuk satu resit.
+  assert.deepEqual(autoMatches([pay('p1', '2026-11-03', 10)], [rec('r1', '2026-11-03', 10), rec('r2', '2026-11-03', 10)]), []);
+  assert.deepEqual(autoMatches([pay('p1', '2026-11-03', 10), pay('p2', '2026-11-03', 10)], [rec('r1', '2026-11-03', 10)]), []);
+  // Padanan yang pernah dibuang tidak dipadankan semula.
+  assert.deepEqual(autoMatches([pay('p1', '2026-11-03', 10, { padanan: 'tolak' })], [rec('r1', '2026-11-03', 10)]), []);
+  // Yang sudah dipadankan tidak berubah, dan resit itu tidak boleh diambil lagi.
+  assert.deepEqual(autoMatches([pay('p1', '2026-11-03', 10, { resit_id: 'r1' }), pay('p2', '2026-11-03', 10)], [rec('r1', '2026-11-03', 10)]), []);
+  // Resit dalam Sampah tidak dikira.
+  assert.deepEqual(autoMatches([pay('p1', '2026-11-03', 10)], [rec('r1', '2026-11-03', 10, { keadaan: 'sampah' })]), []);
+});
+
+test('matchCandidates menyusun ikut tarikh terdekat dalam 3 hari', () => {
+  const receipts = [rec('jauh', '2026-11-10', 10), rec('dua', '2026-11-05', 10), rec('sama', '2026-11-03', 10), rec('lain', '2026-11-03', 11), rec('tiada', '', 10)];
+  assert.deepEqual(matchCandidates(pay('p', '2026-11-03', 10), receipts, []).map((r) => r.id), ['sama', 'dua']);
+  const others = [pay('q', '2026-11-03', 10, { resit_id: 'sama' })];
+  assert.deepEqual(matchCandidates(pay('p', '2026-11-03', 10), receipts, others).map((r) => r.id), ['dua']);
+});
+
+test('padanan ke resit dalam Sampah atau yang hilang dianggap tiada', () => {
+  const payment = pay('p', '2026-11-03', 10, { resit_id: 'r1' });
+  assert.equal(linkedReceipt(payment, [rec('r1', '2026-11-03', 10)]).id, 'r1');
+  assert.equal(linkedReceipt(payment, [rec('r1', '2026-11-03', 10, { keadaan: 'arkib' })]).id, 'r1');
+  assert.equal(linkedReceipt(payment, [rec('r1', '2026-11-03', 10, { keadaan: 'sampah' })]), null);
+  assert.equal(linkedReceipt(payment, []), null);
+  assert.equal(paymentForReceipt('r1', [payment]).id, 'p');
+});
+
+test('buildAiContext menyenaraikan bayaran tanpa rujukan, dan menghadkan bilangannya', () => {
+  const rows = Array.from({ length: 300 }, (_, i) => ({ id: 'b' + i, keterangan: 'KEDAI' + i, tarikh: '2026-11-03', jumlah: '5', rujukan: 'SULIT-RUJUKAN', keadaan: '' }));
+  rows.push({ id: 'x', keterangan: 'DIABAIKAN', tarikh: '2026-11-03', jumlah: '1', keadaan: 'abai' });
+  const text = buildAiContext({ Bayaran: rows }, { today: '2026-11-05', view: 'receipts' });
+  assert.equal((text.match(/KEDAI/g) || []).length, 200);
+  assert.ok(!text.includes('SULIT-RUJUKAN'));
+  assert.ok(!text.includes('DIABAIKAN'));
 });

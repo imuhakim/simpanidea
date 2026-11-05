@@ -109,6 +109,20 @@ Tekan **Ambil gambar** di halaman Resit. Resit terus dimuat naik dan AI mengisi 
 - **Tiada kunci atau gagal:** resit tetap tersimpan, dan boleh diimbas kemudian dengan **Imbas dengan AI**.
 - **Jumlah bulanan:** dikira ikut tarikh resit, dan diasingkan ikut mata wang.
 
+### Bayaran Touch 'n Go
+
+Tiada API awam ditemui untuk membaca transaksi peribadi Touch 'n Go, jadi bayaran dimasukkan melalui penyata.
+
+1. Dalam app Touch 'n Go, buka **Transaction History** dan tekan **Email**.
+2. Di halaman Resit, tekan **Import penyata** dan pilih fail itu. PDF, CSV dan tangkapan skrin diterima.
+3. Semak senarai bayaran yang dibaca AI, kemudian tekan **Simpan**.
+
+- **Padanan automatik:** dibuat bila jumlah dan tarikh sama, dan hanya ada satu calon pada kedua-dua belah. Selebihnya anda pilih sendiri.
+- **Belum ada resit:** bayaran tanpa resit disenaraikan. Tekan **Abaikan** untuk bayaran seperti tol.
+- **Import berulang:** penyata yang bertindih tidak mencipta bayaran berganda.
+- **Privasi:** fail dihantar kepada Anthropic melalui kunci API anda. Fail itu tidak disimpan. Hanya senarai bayaran masuk ke Google Sheet anda.
+- **Had:** PDF berkata laluan tidak dapat dibaca. Penyata yang sangat panjang mungkin gagal, jadi gunakan julat tarikh yang lebih pendek.
+
 ## Tarikh dan masa
 
 Semua rekod menunjukkan tarikh dan masa ia dibuat. Item yang menunggu internet kekal dengan masa ia dibuat di peranti, bukan masa ia sampai ke Google. Masa ini ikut jam peranti anda.
