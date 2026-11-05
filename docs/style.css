@@ -560,6 +560,43 @@ div.row-main { cursor: default; }
 .note-meta { display: flex; align-items: center; gap: 4px; margin-top: 10px; color: var(--ink-2); font-size: 12.5px; }
 .note-meta .icon { width: 13px; height: 13px; }
 
+/* Checklist */
+.note-list { cursor: pointer; }
+.note-open { display: block; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.note-checks { display: grid; gap: 2px; margin-top: 4px; }
+.note-check { display: flex; align-items: flex-start; gap: 9px; padding: 5px 0; overflow-wrap: anywhere; cursor: pointer; }
+.note-check.done span { color: var(--ink-2); text-decoration: line-through; }
+.check-box {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  appearance: none;
+  border: 2px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--raised);
+  cursor: pointer;
+  transition: border-color .16s, background .16s;
+}
+.check-box:checked { border-color: var(--tone-fg); background: var(--tone-fg); }
+.check-box:checked::after {
+  content: "";
+  width: 5px;
+  height: 10px;
+  margin-top: -2px;
+  border: solid var(--on-tone);
+  border-width: 0 2px 2px 0;
+  transform: rotate(42deg);
+}
+.check-rows { display: grid; gap: 6px; margin-bottom: 8px; }
+.check-row { display: flex; align-items: center; gap: 8px; }
+.check-row .check-box { margin: 0; }
+.check-input { flex: 1; min-width: 0; }
+.check-remove { flex: none; }
+.check-add { width: 100%; justify-content: center; }
+
 /* Lampiran */
 .attachments {
   display: grid;

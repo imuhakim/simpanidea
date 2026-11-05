@@ -1,22 +1,49 @@
-// Borang Tambah: tulis nota, tampal link, ambil gambar atau pilih dari galeri.
-import { addItems, imageItem, itemFromText } from '../lib/data.js';
+// Borang Tambah: tulis nota atau checklist, tampal link, ambil gambar atau pilih dari galeri.
+import { addItems, imageItem, itemFromText, newItem } from '../lib/data.js';
 import { field, h, icon, openSheet, toast } from '../lib/dom.js';
 import { photoButtons } from '../lib/images.js';
+import { noteEditor } from './checklist.js';
 
-export function openComposer({ text = '', ruang = '' } = {}) {
+const KINDS = {
+  '': { sheet: 'Tambah', label: 'Link atau nota', placeholder: 'Tampal link, atau tulis idea anda' },
+  note: { sheet: 'Tambah nota', label: 'Nota', placeholder: 'Tulis idea anda' },
+  link: { sheet: 'Tambah link', label: 'Link', placeholder: 'Tampal link di sini' },
+  image: { sheet: 'Tambah screenshot', label: 'Catatan (pilihan)', placeholder: 'Catatan untuk screenshot ini' }
+};
+
+/** kind mengikut halaman yang sedang dibuka: note, link, image, atau kosong untuk umum. */
+export function openComposer({ text = '', ruang = '', kind = '', mode = '', files: initialFiles = [] } = {}) {
+  const words = KINDS[kind] || KINDS[''];
   const files = [];
   const previewUrls = new Map();
   const previews = h('div', { class: 'compose-previews' });
-  const textInput = h('textarea', { class: 'input', rows: 4, value: text, placeholder: 'Tampal link, atau tulis idea anda' });
-  const titleInput = h('input', { class: 'input', type: 'text', placeholder: 'Contoh: Resit servis kereta' });
-  const titleField = field('Tajuk (ini sahaja yang kelihatan di Info Penting)', titleInput);
+  const editor = noteEditor({
+    text,
+    mode,
+    label: words.label,
+    placeholder: words.placeholder,
+    rows: 4,
+    showModes: kind !== 'link' && kind !== 'image'
+  });
+  const titleInput = h('input', {
+    class: 'input',
+    type: 'text',
+    maxlength: 200,
+    placeholder: 'Contoh: Resit servis kereta',
+    onkeydown: (event) => {
+      if (event.key !== 'Enter' || event.isComposing) return;
+      event.preventDefault();
+      if (editor.value().trim() || files.length) save();
+      else editor.focus();
+    }
+  });
+  const infoHint = h('span', { class: 'field-hint', hidden: ruang !== 'info' }, 'Hanya tajuk ini yang kelihatan di Info Penting.');
   const place = h('select', {
     class: 'input',
-    onchange: () => { titleField.hidden = place.value !== 'info'; }
+    onchange: () => { infoHint.hidden = place.value !== 'info'; }
   },
     h('option', { value: '', selected: ruang === '' }, 'Inbox'),
     h('option', { value: 'info', selected: ruang === 'info' }, 'Info Penting'));
-  titleField.hidden = ruang !== 'info';
 
   function drawPreviews() {
     previews.replaceChildren(...files.map((file) => h('div', { class: 'compose-preview' },
@@ -33,7 +60,6 @@ export function openComposer({ text = '', ruang = '' } = {}) {
       }, icon('close')))));
     previews.hidden = !files.length;
   }
-  drawPreviews();
 
   function addFiles(newFiles) {
     for (const file of newFiles) {
@@ -43,27 +69,39 @@ export function openComposer({ text = '', ruang = '' } = {}) {
     }
     drawPreviews();
   }
+  addFiles(initialFiles);
 
   let dialog;
   async function save() {
-    const value = textInput.value.trim();
-    if (!value && !files.length) {
+    const value = editor.value().trim();
+    const title = titleInput.value.trim();
+    const isChecklist = editor.mode() === 'checklist';
+    const staysNote = kind === 'note' || isChecklist;
+    if (isChecklist && !value) {
+      toast('Tambah sekurang-kurangnya satu perkara', true);
+      return;
+    }
+    if (!value && !files.length && (!title || kind === 'link' || kind === 'image')) {
       toast('Tulis sesuatu atau tambah gambar dahulu', true);
       return;
     }
     const chosenPlace = place.value;
-    const chosenTitle = chosenPlace === 'info' ? titleInput.value.trim() : '';
+    // Screenshot kekal berdiri sendiri. Selain itu, gambar bersama teks menjadi lampiran nota.
+    const standalone = files.length > 0 && (kind === 'image' || (!value && !staysNote));
+    const imageFields = standalone
+      ? {
+        ruang: chosenPlace,
+        ...(title || chosenPlace === 'info' ? { title } : {}),
+        ...(value ? { text: value } : {})
+      }
+      : { ruang: 'lampiran', title: '' };
     try {
-      // Dengan teks, gambar menjadi lampiran nota. Tanpa teks, setiap gambar berdiri sendiri.
-      const images = await Promise.all(files.map((file) => imageItem(
-        file, value ? { ruang: 'lampiran', title: '' } : (chosenPlace === 'info' ? { ruang: 'info', title: chosenTitle } : { ruang: chosenPlace }))));
+      const images = await Promise.all(files.map((file) => imageItem(file, imageFields)));
       const entries = [...images];
-      if (value) {
-        entries.push(itemFromText(value, {
-          ruang: chosenPlace,
-          title: chosenTitle,
-          gambar: images.map((image) => image.id).join(',')
-        }));
+      if (!standalone) {
+        const fields = { ruang: chosenPlace, title, gambar: images.map((image) => image.id).join(',') };
+        // Nota yang ditulis di halaman Nota kekal nota, walaupun ada link di dalamnya.
+        entries.push(value && !staysNote ? itemFromText(value, fields) : newItem({ type: 'note', text: value, ...fields }));
       }
       dialog.close();
       await addItems(entries);
@@ -72,15 +110,14 @@ export function openComposer({ text = '', ruang = '' } = {}) {
     }
   }
 
+  const photos = [previews, h('div', { class: 'button-row field' }, photoButtons(addFiles))];
   dialog = openSheet({
-    title: 'Tambah',
+    title: words.sheet,
     body: [
-      field('Link atau nota', textInput),
-      previews,
-      h('div', { class: 'button-row field' }, photoButtons(addFiles)),
-      field('Simpan ke', place),
-      titleField
-    ],
+      field('Tajuk (pilihan)', titleInput, infoHint),
+      kind === 'image' ? [photos, editor.element] : [editor.element, photos],
+      field('Simpan ke', place)
+    ].flat(),
     actions: [
       h('span', { class: 'foot-spacer' }),
       h('button', { class: 'button plain', type: 'button', onclick: () => dialog.close() }, 'Batal'),
@@ -88,5 +125,7 @@ export function openComposer({ text = '', ruang = '' } = {}) {
     ],
     onClose: () => previewUrls.forEach((url) => URL.revokeObjectURL(url))
   });
-  textInput.focus();
+  // Kalau isi sudah ada, yang tinggal cuma tajuk. Di halaman Screenshot, papan kekunci jangan menutup butang gambar.
+  if (text || files.length) titleInput.focus();
+  else if (kind !== 'image') editor.focus();
 }

@@ -6,6 +6,7 @@ import { buildAiContext } from '../docs/lib/ai-context.js';
 import { createVault, decrypt, encrypt, unlockVault } from '../docs/lib/vault.js';
 import { autoMatches, dayGap, linkedReceipt, matchCandidates, paymentForReceipt, sameAmount } from '../docs/lib/payments.js';
 import { cleanName, greetingFor } from '../docs/lib/profile.js';
+import { checklistSummary, checklistText, parseChecklist, readableNote, rowsFromText, textFromRows } from '../docs/lib/checklist.js';
 import { createPinRecord, isValidPin, isWeakPin, lockoutSeconds, verifyPin } from '../docs/lib/pin.js';
 
 test('YouTube dikenali dari semua bentuk link biasa', () => {
@@ -229,4 +230,33 @@ test('sapaan mengikut waktu, dan nama dibersihkan', () => {
   assert.equal(cleanName('  Ali   Abu \n'), 'Ali Abu');
   assert.equal(cleanName('x'.repeat(90)).length, 40);
   assert.equal(cleanName(null), '');
+});
+
+test('checklist dikenali dari teks, dan nota biasa kekal nota biasa', () => {
+  assert.deepEqual(parseChecklist('[ ] Beli susu\n[x] Bayar bil'), [
+    { text: 'Beli susu', done: false },
+    { text: 'Bayar bil', done: true }
+  ]);
+  assert.deepEqual(parseChecklist('[X] Besar\n\n[ ] Ada baris kosong'), [
+    { text: 'Besar', done: true },
+    { text: 'Ada baris kosong', done: false }
+  ]);
+  for (const text of ['', null, 'Idea biasa', '[ ] Satu\nBaris biasa', '[ ]', '[y] Bukan tanda']) {
+    assert.equal(parseChecklist(text), null, String(text));
+  }
+});
+
+test('checklist kekal sama selepas disimpan dan dibaca semula', () => {
+  const rows = [{ text: 'Satu', done: true }, { text: 'Dua', done: false }];
+  assert.deepEqual(parseChecklist(checklistText(rows)), rows);
+  assert.equal(checklistText([{ text: '  ', done: true }, { text: ' a\nb ', done: false }]), '[ ] a b');
+  assert.equal(checklistSummary(rows), '1 daripada 2 siap');
+});
+
+test('nota boleh ditukar kepada checklist dan sebaliknya tanpa hilang teks', () => {
+  assert.deepEqual(rowsFromText('Satu\n\nDua'), [{ text: 'Satu', done: false }, { text: 'Dua', done: false }]);
+  assert.deepEqual(rowsFromText('[x] Satu'), [{ text: 'Satu', done: true }]);
+  assert.equal(textFromRows([{ text: 'Satu', done: true }, { text: '', done: false }, { text: 'Dua', done: false }]), 'Satu\nDua');
+  assert.equal(readableNote('[x] Satu\n[ ] Dua'), '☑ Satu\n☐ Dua');
+  assert.equal(readableNote('Biasa'), 'Biasa');
 });

@@ -1,10 +1,13 @@
 // Inbox, Semua, Screenshot, Link, Nota dan Info Penting.
 import { addItems, findItem, idList, imageItem, patchItem, processQueue, isConfigured, state, render, loadQueue } from '../lib/data.js';
-import { askText, domainOf, emptyState, field, formatDate, h, icon, isWebUrl, openSheet, toast } from '../lib/dom.js';
+import { checklistSummary, checklistText, parseChecklist, readableNote } from '../lib/checklist.js';
+import { askText, celebrate, domainOf, emptyState, field, formatDate, h, icon, isWebUrl, openSheet, toast } from '../lib/dom.js';
 import { attachmentEditor, imageHolder, imageUrlFor, openImage, photoButtons } from '../lib/images.js';
 import { parseVideo } from '../lib/video.js';
 import { archiveWithUndo, manageButtons } from './manage.js';
 import { askAiButton } from './ai.js';
+import { noteEditor } from './checklist.js';
+import { openComposer } from './compose.js';
 
 // Info Penting berasingan dan tersorok, jadi isinya tidak muncul di senarai lain.
 const notAttachment = (item) => item.ruang !== 'lampiran' && item.ruang !== 'info';
@@ -34,7 +37,7 @@ export const LIBRARY_VIEWS = {
   note: {
     title: 'Nota', icon: 'note', layout: 'notes',
     filter: (item) => item.type === 'note' && notAttachment(item),
-    empty: ['Belum ada nota', 'Tekan Tambah untuk tulis idea anda.']
+    empty: ['Belum ada nota', 'Tulis nota biasa, atau buat checklist untuk ditanda satu per satu.']
   },
   info: {
     title: 'Info Penting', icon: 'info', layout: 'hidden',
@@ -47,13 +50,21 @@ for (const [key, view] of Object.entries(LIBRARY_VIEWS)) view.render = () => ren
 export function displayTitle(item) {
   if (item.title) return item.type === 'image' ? item.title.replace(/\.[a-z0-9]{2,5}$/i, '') : item.title;
   if (item.type === 'link') return domainOf(item.url) || item.url;
-  if (item.type === 'note') return (item.text || '').split('\n')[0] || 'Nota bergambar';
+  if (item.type === 'note') {
+    const rows = parseChecklist(item.text);
+    if (rows) return rows[0].text;
+    return (item.text || '').split('\n')[0] || 'Nota bergambar';
+  }
   return 'Gambar';
 }
 
 function subtitle(item) {
   if (item.type === 'link') return item.text && item.title ? item.text : domainOf(item.url);
-  if (item.type === 'note') return item.title ? item.text : (item.text || '').split('\n').slice(1).join(' ');
+  if (item.type === 'note') {
+    const rows = parseChecklist(item.text);
+    if (rows) return checklistSummary(rows);
+    return item.title ? item.text : (item.text || '').split('\n').slice(1).join(' ');
+  }
   return item.text || '';
 }
 
@@ -165,7 +176,42 @@ function overviewStats() {
     statTile('watch', 'watch', videos, 'Video belum ditonton'));
 }
 
+/** Ditanda terus dari senarai, tanpa perlu membuka nota. */
+function toggleChecklist(id, index, done, box) {
+  const item = findItem(id);
+  const rows = item && parseChecklist(item.text);
+  if (!rows || !rows[index]) return;
+  rows[index].done = done;
+  if (done && rows.every((row) => row.done)) celebrate(box.left + box.width / 2, box.top);
+  patchItem(id, { text: checklistText(rows) });
+}
+
+function checklistCard(item, rows) {
+  return h('article', {
+    class: 'note note-list note-c' + noteColour(item.id),
+    onclick: (event) => { if (!event.target.closest('label, button')) openItem(item.id); }
+  },
+  h('button', { class: 'note-open', type: 'button', onclick: () => openItem(item.id) },
+    h('span', { class: 'note-title' }, item.title || 'Checklist')),
+  h('div', { class: 'note-checks' }, rows.map((row, index) => h('label', { class: 'note-check' + (row.done ? ' done' : '') },
+    h('input', {
+      class: 'check-box',
+      type: 'checkbox',
+      checked: row.done,
+      onchange: (event) => {
+        const box = event.target.getBoundingClientRect();
+        // Lepaskan fokus supaya senarai boleh dilukis semula dengan segera.
+        event.target.blur();
+        toggleChecklist(item.id, index, event.target.checked, box);
+      }
+    }),
+    h('span', {}, row.text)))),
+  h('span', { class: 'note-meta' }, checklistSummary(rows) + ' · ' + formatDate(item.createdAt)));
+}
+
 function noteCard(item) {
+  const rows = parseChecklist(item.text);
+  if (rows) return checklistCard(item, rows);
   const [firstImage] = idList(item.gambar);
   const images = idList(item.gambar).length;
   return h('button', { class: 'note note-c' + noteColour(item.id), type: 'button', onclick: () => openItem(item.id) },
@@ -199,7 +245,7 @@ function infoContent(item) {
       'aria-label': 'Besarkan gambar',
       onclick: () => openImage(id, infoTitle(item))
     }, imageHolder(id)))),
-    item.text && h('p', { class: 'info-text' }, item.text),
+    item.text && h('p', { class: 'info-text' }, readableNote(item.text)),
     isWebUrl(item.url) && h('a', { class: 'sheet-link', href: item.url, target: '_blank', rel: 'noopener noreferrer' }, item.url),
     !imageIds.length && !item.text && !item.url && !firstAttachment && h('p', { class: 'info-text muted' }, 'Tiada isi.'),
     h('div', { class: 'button-row' },
@@ -241,6 +287,13 @@ export function renderLibrary(key) {
   const children = [];
 
   if (key === 'inbox' && isConfigured()) children.push(overviewStats());
+
+  if (key === 'note') {
+    children.push(h('div', { class: 'page-head' },
+      h('div', { class: 'button-row' },
+        h('button', { class: 'button', type: 'button', onclick: () => openComposer({ kind: 'note', mode: 'note' }) }, icon('note'), 'Nota baru'),
+        h('button', { class: 'button', type: 'button', onclick: () => openComposer({ kind: 'note', mode: 'checklist' }) }, icon('check'), 'Checklist baru'))));
+  }
 
   if (key === 'info') {
     children.push(h('div', { class: 'page-head' },
@@ -289,7 +342,7 @@ export function openItem(id) {
   if (!item) return;
 
   const titleInput = h('input', { class: 'input', type: 'text', value: item.title, placeholder: 'Tiada tajuk' });
-  const textInput = h('textarea', { class: 'input', rows: 5, value: item.text, placeholder: 'Catatan' });
+  const editor = noteEditor({ text: item.text, showModes: item.type === 'note' });
   const attachments = attachmentEditor(item.gambar);
   const place = h('select', { class: 'input' },
     h('option', { value: '', selected: item.ruang === '' }, 'Inbox'),
@@ -314,7 +367,7 @@ export function openItem(id) {
     askAiButton(() => ({
       label: displayTitle(item),
       text: 'Jenis: ' + (TYPE_LABEL[item.type] || 'Item') + '\nTajuk: ' + titleInput.value +
-        '\nCatatan: ' + textInput.value + (item.url ? '\nLink: ' + item.url : ''),
+        '\nCatatan: ' + editor.value() + (item.url ? '\nLink: ' + item.url : ''),
       imageIds: item.type === 'image' ? [item.id] : idList(attachments.value()),
       hidden: item.ruang === 'info'
     })),
@@ -334,7 +387,7 @@ export function openItem(id) {
     }, icon(isNew ? 'check' : 'undo'), isNew ? 'Tanda sudah dilihat' : 'Pulangkan ke Inbox')
   ];
   body.push(h('div', { class: 'sheet-actions' }, quickActions));
-  body.push(field('Tajuk', titleInput), field('Catatan', textInput), field('Simpan di', place));
+  body.push(field('Tajuk', titleInput), editor.element, field('Simpan di', place));
   if (item.type !== 'image') body.push(h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Gambar'), attachments.element));
 
   dialog = openSheet({
@@ -346,7 +399,7 @@ export function openItem(id) {
       ...manageButtons({
         table: 'Item',
         id: item.id,
-        read: () => ({ title: titleInput.value.trim(), text: textInput.value, gambar: attachments.value() }),
+        read: () => ({ title: titleInput.value.trim(), text: editor.value(), gambar: attachments.value() }),
         done: () => {
           saved = true;
           attachments.commit();
@@ -362,7 +415,7 @@ export function openItem(id) {
           attachments.commit();
           patchItem(item.id, {
             title: titleInput.value.trim(),
-            text: textInput.value,
+            text: editor.value(),
             ruang: place.value,
             gambar: attachments.value()
           });

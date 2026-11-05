@@ -270,6 +270,18 @@ export function patchItem(id, fields) {
   return writeRecord('Item', record);
 }
 
+/** Letak tajuk pada item, sama ada ia masih menunggu dihantar atau sudah sampai ke Google. */
+export async function setItemTitle(id, title) {
+  const entry = await SimpanStore.getQueued(id);
+  if (entry && entry.status !== 'sending') {
+    await SimpanStore.enqueue({ ...entry, title });
+    await loadQueue();
+    render();
+    return;
+  }
+  await patchItem(id, { title });
+}
+
 /* Gambar */
 export async function compressImage(blob) {
   let bitmap;

@@ -1,5 +1,5 @@
-import { addItems, imageItem, itemFromText, isConfigured, loadLocalData, processQueue, recordsIn, refresh, render, setRenderer, state } from './lib/data.js';
-import { h, icon, toast } from './lib/dom.js';
+import { isConfigured, loadLocalData, processQueue, recordsIn, refresh, render, setItemTitle, setRenderer, state } from './lib/data.js';
+import { askText, h, icon, toast } from './lib/dom.js';
 import { openComposer } from './views/compose.js';
 import { LIBRARY_VIEWS, hideAllInfo } from './views/library.js';
 import { renderSearch } from './views/search.js';
@@ -33,7 +33,7 @@ const NAV_GROUPS = [
   { label: 'Belajar', views: ['classes', 'watch'] },
   { label: 'Lain-lain', views: ['archive', 'trash', 'settings'] }
 ];
-const TAB_VIEWS = ['inbox', 'tasks', 'image', 'link', 'watch'];
+const TAB_VIEWS = ['inbox', 'note', 'image', 'link', 'watch'];
 const PHONE_WIDTH = '(max-width: 760px)';
 const startView = () => (window.matchMedia(PHONE_WIDTH).matches ? 'image' : 'inbox');
 
@@ -225,16 +225,37 @@ function closeMenu() {
   $('scrim').hidden = true;
 }
 
+let sharedIds = [];
+
 function handleShareResult() {
   const params = new URLSearchParams(location.search);
   if (params.has('share_error')) {
     toast('Item yang dikongsi tidak dapat dibaca', true);
   } else if (params.has('shared')) {
     const count = Number(params.get('shared'));
-    if (count) toast(count === 1 ? 'Item diterima' : count + ' item diterima');
-    else toast('Tiada gambar atau link dalam item yang dikongsi', true);
+    sharedIds = String(params.get('ids') || '').split(',').filter(Boolean);
+    if (!count) toast('Tiada gambar atau link dalam item yang dikongsi', true);
+    else if (!sharedIds.length) toast(count === 1 ? 'Item diterima' : count + ' item diterima');
   }
   if (location.search) history.replaceState(null, '', location.pathname + location.hash);
+}
+
+/** Item yang dikongsi sudah selamat dalam barisan. Tajuk hanya ditanya selepas app dibuka kuncinya. */
+async function askSharedTitle() {
+  if (!sharedIds.length || isLocked()) return;
+  const ids = sharedIds;
+  sharedIds = [];
+  const entries = await Promise.all(ids.map((id) => SimpanStore.getQueued(id)));
+  // Nama fail seperti Screenshot_2026.png bukan tajuk yang berguna untuk dicadangkan.
+  const existing = entries.map((entry) => (entry && entry.title) || '').find((title) => title && !/\.[a-z0-9]{2,5}$/i.test(title));
+  const title = await askText({
+    title: ids.length === 1 ? 'Item diterima. Beri tajuk?' : ids.length + ' item diterima. Beri tajuk?',
+    label: 'Tajuk',
+    value: existing || '',
+    confirmLabel: 'Simpan',
+    cancelLabel: 'Langkau'
+  });
+  if (title) await Promise.all(ids.map((id) => setItemTitle(id, title)));
 }
 
 async function setupServiceWorker() {
@@ -265,17 +286,10 @@ function setupInstall() {
   window.addEventListener('appinstalled', markInstalled);
 }
 
-async function addImageFiles(files) {
+// Gambar dan link yang ditampal atau diseret masuk melalui borang Tambah, supaya boleh diberi tajuk dahulu.
+function composeImageFiles(files) {
   const images = [...files].filter((file) => file.type.startsWith('image/'));
-  const items = [];
-  for (const file of images) {
-    try {
-      items.push(await imageItem(file));
-    } catch (err) {
-      toast(err.message, true);
-    }
-  }
-  if (items.length) await addItems(items);
+  if (images.length) openComposer({ kind: 'image', files: images });
   return images.length;
 }
 
@@ -285,14 +299,13 @@ function setupCapture() {
     if (document.querySelector('dialog[open]')) return;
     if (event.clipboardData.files.length) {
       event.preventDefault();
-      await addImageFiles(event.clipboardData.files);
+      composeImageFiles(event.clipboardData.files);
       return;
     }
     const text = event.clipboardData.getData('text').trim();
     if (!text) return;
     event.preventDefault();
-    if (/^https?:\/\/\S+$/i.test(text)) addItems([itemFromText(text)]);
-    else openComposer({ text });
+    openComposer({ text, kind: /^https?:\/\/\S+$/i.test(text) ? 'link' : '' });
   });
 
   const hasFiles = (event) => event.dataTransfer && [...event.dataTransfer.types].includes('Files');
@@ -304,12 +317,12 @@ function setupCapture() {
   window.addEventListener('dragleave', (event) => {
     if (!event.relatedTarget) $('drop-overlay').hidden = true;
   });
-  window.addEventListener('drop', async (event) => {
+  window.addEventListener('drop', (event) => {
     if (!hasFiles(event)) return;
     event.preventDefault();
     $('drop-overlay').hidden = true;
     if (isLocked()) return;
-    if (!await addImageFiles(event.dataTransfer.files)) toast('Hanya gambar boleh diseret masuk', true);
+    if (!composeImageFiles(event.dataTransfer.files)) toast('Hanya gambar boleh diseret masuk', true);
   });
 }
 
@@ -324,8 +337,9 @@ async function start() {
       hideAllInfo();
       render();
     },
-    onChange: () => {
+    onChange: async () => {
       renderChrome();
+      await askSharedTitle();
       askNameIfNeeded();
     }
   });
@@ -342,7 +356,7 @@ async function start() {
   $('scrim').addEventListener('click', closeMenu);
   $('add').addEventListener('click', () => {
     if (state.view === 'receipts') openReceiptAdd();
-    else openComposer({ ruang: state.view === 'info' ? 'info' : '' });
+    else openComposer({ ruang: state.view === 'info' ? 'info' : '', kind: ['note', 'link', 'image'].includes(state.view) ? state.view : '' });
   });
   $('refresh').addEventListener('click', async () => {
     await processQueue();
@@ -389,6 +403,7 @@ async function start() {
   // Paparkan salinan dalam peranti dahulu supaya app terus terbuka walaupun Google perlahan.
   await loadLocalData();
   route();
+  askSharedTitle();
 
   await setupServiceWorker();
   render();

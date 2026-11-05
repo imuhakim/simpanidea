@@ -118,7 +118,7 @@ export function askConfirm({ title, text, confirmLabel, danger = true }) {
   });
 }
 
-export function askText({ title, label, value = '', confirmLabel = 'Simpan' }) {
+export function askText({ title, label, value = '', confirmLabel = 'Simpan', cancelLabel = 'Batal' }) {
   return new Promise((resolve) => {
     let answer = null;
     let dialog;
@@ -136,7 +136,7 @@ export function askText({ title, label, value = '', confirmLabel = 'Simpan' }) {
       body: form,
       onClose: () => resolve(answer),
       actions: [
-        h('button', { class: 'button', type: 'button', onclick: () => dialog.close() }, 'Batal'),
+        h('button', { class: 'button', type: 'button', onclick: () => dialog.close() }, cancelLabel),
         h('button', { class: 'button primary', type: 'submit', form: 'ask-text-form' }, confirmLabel)
       ]
     });
