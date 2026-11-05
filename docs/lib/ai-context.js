@@ -43,6 +43,13 @@ export function buildAiContext(tables, { today, view }) {
     kelas.terakhir_dibuka && 'terakhir dibuka ' + String(kelas.terakhir_dibuka).slice(0, 10),
     clip(kelas.nota)));
 
+  const receipts = (tables.Resit || []).filter((receipt) => !inTrash(receipt)).map((receipt) => line(
+    clip(receipt.peniaga || 'Resit') + archivedMark(receipt),
+    receipt.tarikh,
+    receipt.jumlah !== '' && receipt.jumlah != null && (receipt.mata_wang || 'RM') + ' ' + receipt.jumlah,
+    clip(receipt.kategori),
+    clip(receipt.nota)));
+
   const head = [
     'Tarikh hari ini: ' + today,
     'Halaman yang sedang dibuka: ' + view,
@@ -52,6 +59,8 @@ export function buildAiContext(tables, { today, view }) {
     'PAPAN KANBAN', ...cards,
     '',
     'KELAS ONLINE', ...classes,
+    '',
+    'RESIT', ...receipts,
     '',
     'SIMPANAN (terbaru dahulu)'
   ].join('\n');

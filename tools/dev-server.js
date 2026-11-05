@@ -18,9 +18,23 @@ const TYPES = {
 const harness = createHarness();
 harness.setup();
 // Jawapan tiruan untuk AI, supaya panel boleh diuji tanpa kunci API sebenar.
-harness.state.anthropic = (url) => ({
+const FAKE_RECEIPT = {
+  adakah_resit: true,
+  peniaga: 'Kedai Runcit Maju',
+  tarikh: '2026-11-03',
+  masa: '14:32',
+  jumlah: 47.8,
+  mata_wang: 'RM',
+  cukai: 2.7,
+  kategori: 'Runcit',
+  no_resit: 'INV-10293',
+  barangan: [{ nama: 'Beras 5kg', kuantiti: 1, harga: 23.9 }, { nama: 'Telur gred A', kuantiti: 2, harga: 11.9 }]
+};
+harness.state.anthropic = (url, options) => ({
   code: 200,
-  body: url.endsWith('/messages')
+  body: url.endsWith('/messages') && JSON.parse(options.payload).output_config.format
+    ? { stop_reason: 'end_turn', model: 'claude-opus-5-5', usage: { input_tokens: 900, output_tokens: 120 }, content: [{ type: 'text', text: JSON.stringify(FAKE_RECEIPT) }] }
+    : url.endsWith('/messages')
     ? {
       stop_reason: 'end_turn',
       model: 'claude-opus-5-5',

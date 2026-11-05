@@ -5,6 +5,7 @@ import { displayTitle, infoTitle, itemRow, openItem } from './library.js';
 import { openTask } from './tasks.js';
 import { openCard } from './board.js';
 import { openClass } from './classes.js';
+import { openReceipt } from './receipts.js';
 
 function matcher(query) {
   const needle = query.trim().toLowerCase();
@@ -37,17 +38,18 @@ export function renderSearch() {
   const cards = state.tables.Kad.filter((card) => matches(card.tajuk, card.nota));
   const classes = state.tables.Kelas.filter((kelas) => matches(kelas.nama, kelas.url, kelas.nota, kelas.berhenti_di));
 
-  const openers = { Tugasan: openTask, Kad: openCard, Kelas: openClass, Item: openItem };
+  const receipts = state.tables.Resit.filter((receipt) => matches(receipt.peniaga, receipt.kategori, receipt.no_resit, receipt.nota, receipt.barangan));
+  const openers = { Tugasan: openTask, Kad: openCard, Kelas: openClass, Item: openItem, Resit: openReceipt };
   const archived = recordsIn('arkib').filter(({ record }) => (record.ruang === 'info'
     ? matches(record.tajuk)
-    : matches(record.tajuk, record.nama, record.nota, record.url)));
+    : matches(record.tajuk, record.nama, record.nota, record.url, record.peniaga)));
   const archivedTitle = ({ table, record }) => {
-    if (table !== 'Item') return record.tajuk || record.nama;
+    if (table !== 'Item') return record.tajuk || record.nama || record.peniaga || 'Resit';
     const item = itemFromRow(record);
     return item.ruang === 'info' ? infoTitle(item) : displayTitle(item);
   };
 
-  if (!items.length && !hiddenItems.length && !tasks.length && !cards.length && !classes.length && !archived.length) {
+  if (!items.length && !receipts.length && !hiddenItems.length && !tasks.length && !cards.length && !classes.length && !archived.length) {
     return h('div', { class: 'page' }, emptyState('Tiada hasil', 'Tiada apa-apa sepadan dengan "' + state.query.trim() + '".'));
   }
   const columnName = (id) => (state.tables.Lajur.find((column) => column.id === id) || {}).tajuk;
@@ -59,6 +61,7 @@ export function renderSearch() {
       if (location.hash === '#info') window.dispatchEvent(new Event('hashchange'));
       else location.hash = 'info';
     }))),
+    section('Resit', receipts.map((receipt) => resultRow('receipt', receipt.peniaga || 'Resit', [receipt.tarikh, receipt.jumlah && (receipt.mata_wang || 'RM') + ' ' + Number(receipt.jumlah).toFixed(2)].filter(Boolean).join(' · '), () => openReceipt(receipt.id)))),
     section('Tugasan', tasks.map((task) => resultRow('tasks', task.tajuk, task.siap === 'ya' ? 'Siap' : task.nota, () => openTask(task.id)))),
     section('Papan', cards.map((card) => resultRow('board', card.tajuk, columnName(card.lajur_id), () => openCard(card.id)))),
     section('Kelas', classes.map((kelas) => resultRow('class', kelas.nama, kelas.berhenti_di, () => openClass(kelas.id)))),

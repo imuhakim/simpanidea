@@ -11,6 +11,7 @@ import { setInstallPrompt, renderSettings, updateSettings } from './views/settin
 import { isLocked, isPinEnabled, lockNow, setLockHandlers, setupAutoLock } from './views/lock.js';
 import { lockVault } from './views/classes.js';
 import { renderArchive, renderTrash } from './views/archive.js';
+import { openReceiptAdd, renderReceipts } from './views/receipts.js';
 import { clearAiChat, openAi } from './views/ai.js';
 
 const VIEWS = {
@@ -19,12 +20,13 @@ const VIEWS = {
   board: { title: 'Papan', icon: 'board', render: renderBoard },
   classes: { title: 'Kelas', icon: 'class', render: renderClasses },
   watch: { title: 'Tonton', icon: 'watch', render: renderWatch },
+  receipts: { title: 'Resit', icon: 'receipt', render: renderReceipts },
   archive: { title: 'Arkib', icon: 'archive', render: renderArchive },
   trash: { title: 'Sampah', icon: 'trash', render: renderTrash },
   settings: { title: 'Tetapan', icon: 'settings', render: renderSettings }
 };
 const NAV_GROUPS = [
-  { label: 'Simpanan', views: ['inbox', 'all', 'image', 'link', 'note', 'info'] },
+  { label: 'Simpanan', views: ['inbox', 'all', 'image', 'link', 'note', 'info', 'receipts'] },
   { label: 'Kerja', views: ['tasks', 'board'] },
   { label: 'Belajar', views: ['classes', 'watch'] },
   { label: 'Lain-lain', views: ['archive', 'trash', 'settings'] }
@@ -88,6 +90,7 @@ function viewSummary(key) {
   if (key === 'board') return counted(state.tables.Kad.length, 'kad') || 'Susun kerja kau';
   if (key === 'classes') return counted(state.tables.Kelas.length, 'kelas') || 'Link, akaun dan password';
   if (key === 'watch') return 'YouTube, TikTok dan Facebook';
+  if (key === 'receipts') return counted(state.tables.Resit.length, 'resit') || 'AI baca dan isikan data';
   if (key === 'settings') return 'Sambungan, AI dan kunci app';
   if (key === 'archive') return counted(recordsIn('arkib').length, 'rekod') || 'Simpan untuk rujukan';
   if (key === 'trash') return counted(recordsIn('sampah').length, 'rekod') || 'Boleh dipulihkan dalam 30 hari';
@@ -325,7 +328,10 @@ async function start() {
   $('open-menu').addEventListener('click', openMenu);
   $('close-menu').addEventListener('click', closeMenu);
   $('scrim').addEventListener('click', closeMenu);
-  $('add').addEventListener('click', () => openComposer({ ruang: state.view === 'info' ? 'info' : '' }));
+  $('add').addEventListener('click', () => {
+    if (state.view === 'receipts') openReceiptAdd();
+    else openComposer({ ruang: state.view === 'info' ? 'info' : '' });
+  });
   $('refresh').addEventListener('click', async () => {
     await processQueue();
     await refresh();

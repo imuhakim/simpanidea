@@ -117,16 +117,20 @@ const contextTables = () => ({
   Tugasan: [{ id: 't', tajuk: 'Bayar yuran', nota: '', siap: '', tarikh_akhir: '2026-11-10', keadaan: '' }],
   Kad: [{ id: 'k', tajuk: 'Reka logo', nota: 'gelap', lajur_id: 'l1', keadaan: '' }],
   Lajur: [{ id: 'l1', tajuk: 'Nak buat' }],
+  Resit: [
+    { id: 'r', peniaga: 'Kedai Maju', tarikh: '2026-11-03', jumlah: '47.8', mata_wang: 'RM', kategori: 'Runcit', keadaan: '' },
+    { id: 's', peniaga: 'Resit dibuang', jumlah: '9', keadaan: 'sampah' }
+  ],
   Kelas: [{ id: 'm', nama: 'Canva', url: 'https://kelas.my', username: 'aku@emel.my', password_sulit: 'v1.SULIT.SULIT', status: 'tengah', berhenti_di: 'Modul 3', nota: 'best', keadaan: '' }],
   Tetapan: [{ id: 'peti-password', nilai: 'RAHSIA-PETI' }]
 });
 
 test('konteks AI mengandungi data berguna tanpa rahsia atau sampah', () => {
   const text = buildAiContext(contextTables(), { today: '2026-11-04', view: 'Inbox' });
-  for (const wanted of ['Idea kopi', 'Jual kopi', 'Bayar yuran', '2026-11-10', 'Reka logo', 'Nak buat', 'Canva', 'Modul 3', 'Artikel', 'arkib', '2026-11-04', 'Inbox']) {
+  for (const wanted of ['Idea kopi', 'Jual kopi', 'Bayar yuran', '2026-11-10', 'Reka logo', 'Nak buat', 'Canva', 'Modul 3', 'Artikel', 'arkib', '2026-11-04', 'Inbox', 'Kedai Maju', 'RM 47.8', 'Runcit']) {
     assert.ok(text.includes(wanted), wanted);
   }
-  for (const hidden of ['SULIT', 'aku@emel.my', 'RAHSIA-PETI', 'rahsia sampah', 'Dah buang', 'lampiran.png']) {
+  for (const hidden of ['SULIT', 'aku@emel.my', 'RAHSIA-PETI', 'rahsia sampah', 'Dah buang', 'lampiran.png', 'Resit dibuang']) {
     assert.ok(!text.includes(hidden), hidden);
   }
 });

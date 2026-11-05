@@ -78,9 +78,9 @@ export function itemRow(item, { markable = false, showUnread = false } = {}) {
       itemThumb(item),
       h('span', { class: 'row-text' },
         h('span', { class: 'row-title' }, displayTitle(item)),
-        h('span', { class: 'row-sub' }, subtitle(item) || TYPE_LABEL[item.type] || '')),
-      showUnread && item.status !== 'dilihat' && h('span', { class: 'unread', title: 'Belum dilihat' }),
-      h('span', { class: 'row-date' }, formatDate(item.createdAt))),
+        h('span', { class: 'row-sub' }, subtitle(item) || TYPE_LABEL[item.type] || ''),
+        h('span', { class: 'row-when' }, formatDate(item.createdAt))),
+      showUnread && item.status !== 'dilihat' && h('span', { class: 'unread', title: 'Belum dilihat' })),
     markable && h('div', { class: 'row-side' },
       h('button', {
         class: 'icon-button',
@@ -111,7 +111,8 @@ function queueRow(entry) {
       queuedThumb(entry),
       h('span', { class: 'row-text' },
         h('span', { class: 'row-title' }, entry.ruang === 'info' ? infoTitle(entry) : displayTitle(entry)),
-        h('span', { class: 'row-sub row-state' + (failed ? ' failed' : '') }, label))),
+        h('span', { class: 'row-sub row-state' + (failed ? ' failed' : '') }, label),
+        h('span', { class: 'row-when' }, formatDate(entry.createdAt)))),
     entry.status !== 'sending' && h('div', { class: 'row-side' },
       isConfigured() && h('button', { class: 'button plain', type: 'button', onclick: processQueue }, 'Cuba lagi'),
       h('button', {
@@ -132,9 +133,9 @@ function galleryTile(item) {
     type: 'button',
     'aria-label': displayTitle(item),
     onclick: () => openItem(item.id)
-  }, imageHolder(item.id, '', displayTitle(item)), item.title && !/\.[a-z0-9]{2,5}$/i.test(item.title)
-    ? h('span', { class: 'tile-title' }, displayTitle(item))
-    : null);
+  }, imageHolder(item.id, '', displayTitle(item)),
+  item.title && !/\.[a-z0-9]{2,5}$/i.test(item.title) ? h('span', { class: 'tile-title' }, displayTitle(item)) : null,
+  h('span', { class: 'tile-when' }, formatDate(item.createdAt)));
 }
 
 // Warna tetap untuk setiap nota, supaya tidak berubah setiap kali dibuka.

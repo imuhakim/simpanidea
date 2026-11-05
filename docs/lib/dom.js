@@ -201,16 +201,9 @@ export async function copyText(text, doneMessage) {
 export function formatDate(value) {
   const date = new Date(value);
   if (!value || Number.isNaN(date.getTime())) return '';
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
-  const time = date.toLocaleTimeString('ms-MY', { hour: 'numeric', minute: '2-digit' });
-  if (date.toDateString() === today.toDateString()) return time;
-  if (date.toDateString() === yesterday.toDateString()) return 'Semalam';
-  const sameYear = date.getFullYear() === today.getFullYear();
-  return date.toLocaleDateString('ms-MY', sameYear
-    ? { day: 'numeric', month: 'short' }
-    : { day: 'numeric', month: 'short', year: 'numeric' });
+  // Sentiasa tarikh dan masa penuh, kerana ini menjadi rekod.
+  return date.toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', year: 'numeric' }) + ', ' +
+    date.toLocaleTimeString('ms-MY', { hour: 'numeric', minute: '2-digit' });
 }
 
 export function formatRelative(value) {

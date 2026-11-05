@@ -152,7 +152,7 @@ function openMoveMenu({ table, id, read, done, exclude }) {
 export function manageButtons({ table, id, read, done }) {
   const record = findRecord(table, id);
   const archived = record && record.keadaan === 'arkib';
-  const movable = table !== 'Kelas' && !archived;
+  const movable = table !== 'Kelas' && table !== 'Resit' && !archived;
   const exclude = { Tugasan: 'tasks', Kad: 'board' }[table] ||
     (record && record.ruang === 'info' ? 'info' : record && record.jenis === 'note' ? 'note' : null);
   return [

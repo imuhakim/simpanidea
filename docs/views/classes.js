@@ -1,6 +1,6 @@
 // Kelas online: link, akaun, password disulitkan, dan rekod sama ada dah dibuka atau belum.
 import { findRecord, idList, newId, state, writeRecord } from '../lib/data.js';
-import { copyText, domainOf, emptyState, field, formatRelative, h, icon, isWebUrl, openModal, openSheet, toast } from '../lib/dom.js';
+import { copyText, domainOf, emptyState, field, formatDate, formatRelative, h, icon, isWebUrl, openModal, openSheet, toast } from '../lib/dom.js';
 import { attachmentEditor } from '../lib/images.js';
 import { manageButtons } from './manage.js';
 import { askAiButton } from './ai.js';
@@ -151,7 +151,8 @@ function classRow(kelas) {
     h('button', { class: 'row-main', type: 'button', onclick: () => openClass(kelas.id) },
       h('span', { class: 'row-text' },
         h('span', { class: 'row-title' }, kelas.nama),
-        h('span', { class: 'row-sub' }, kelas.berhenti_di ? 'Berhenti di ' + kelas.berhenti_di : opened)),
+        h('span', { class: 'row-sub' }, kelas.berhenti_di ? 'Berhenti di ' + kelas.berhenti_di : opened),
+        h('span', { class: 'row-when' }, 'Ditambah ' + formatDate(kelas.dicipta))),
       statusLabel(kelas)),
     h('button', {
       class: 'button',
@@ -344,7 +345,7 @@ export function openClass(id) {
 
   dialog = openSheet({
     title: kelas ? kelas.nama : 'Kelas baru',
-    kicker: 'Kelas',
+    kicker: kelas ? 'Ditambah ' + formatDate(kelas.dicipta) : 'Kelas',
     body,
     onClose: () => { if (!saved) attachments.discard(); },
     actions: [

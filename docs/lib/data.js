@@ -6,10 +6,11 @@ const SETTINGS_KEY = 'simpanidea.settings';
 const MAX_IMAGE_EDGE = 2000;
 const IMAGE_QUALITY = 0.8;
 const KEEP_AS_IS = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const EMPTY_TABLES = () => ({ Item: [], Tugasan: [], Kad: [], Lajur: [], Kelas: [], Tetapan: [] });
+const EMPTY_TABLES = () => ({ Item: [], Tugasan: [], Kad: [], Lajur: [], Kelas: [], Tetapan: [], Resit: [] });
+const DATED_TABLES = new Set(['Tugasan', 'Kad', 'Kelas', 'Resit']);
 // Item ditulis dengan nama lajur Sheet, tapi dibaca dalam app dengan nama yang lebih mudah.
 const ITEM_FIELD_TO_COLUMN = { title: 'tajuk', text: 'nota', status: 'status', ruang: 'ruang', gambar: 'gambar' };
-const REQUIRED_BACKEND_VERSION = 3;
+const REQUIRED_BACKEND_VERSION = 4;
 const TRASH_DAYS = 30;
 export const TRASH_LIFETIME_DAYS = TRASH_DAYS;
 let purgedThisSession = false;
@@ -109,7 +110,7 @@ export function findItem(id) {
 /** Semua rekod dalam arkib atau sampah, kecuali gambar lampiran yang mengikut induknya. */
 export function recordsIn(keadaan) {
   const rows = [];
-  for (const table of ['Item', 'Tugasan', 'Kad', 'Kelas']) {
+  for (const table of ['Item', 'Tugasan', 'Kad', 'Kelas', 'Resit']) {
     for (const record of state.raw[table] || []) {
       if (record.keadaan === keadaan && record.ruang !== 'lampiran') rows.push({ table, record });
     }
@@ -205,9 +206,12 @@ export async function refresh() {
 }
 
 /** Simpan atau kemas kini satu rekod. Hanya medan yang diberi akan berubah. */
-export async function writeRecord(table, record) {
-  const id = 'op-' + table + '-' + record.id;
+export async function writeRecord(table, input) {
+  const id = 'op-' + table + '-' + input.id;
   const existing = await SimpanStore.getQueued(id);
+  // Rekod baru membawa masa ia dibuat, walaupun ia lambat sampai ke Google.
+  const isNew = DATED_TABLES.has(table) && !existing && !findRecord(table, input.id);
+  const record = isNew ? { dicipta: new Date().toISOString(), ...input } : input;
   const entry = {
     id,
     kind: 'op',
@@ -337,7 +341,7 @@ export async function addItems(items) {
 async function itemPayload(entry) {
   const payload = {
     id: entry.id, type: entry.type, title: entry.title, url: entry.url,
-    text: entry.text, ruang: entry.ruang || '', gambar: entry.gambar || ''
+    text: entry.text, ruang: entry.ruang || '', gambar: entry.gambar || '', createdAt: entry.createdAt
   };
   let image = null;
   if (entry.type === 'image') {

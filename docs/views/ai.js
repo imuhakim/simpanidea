@@ -30,7 +30,7 @@ export function clearAiChat() {
   focus = null;
 }
 
-function currentModel() {
+export function currentModel() {
   try {
     const saved = localStorage.getItem(MODEL_KEY);
     if (MODELS.some((model) => model.id === saved)) return saved;

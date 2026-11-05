@@ -298,7 +298,7 @@ test('arkib dan sampah disimpan tanpa membuang data atau fail', () => {
 
 test('listAll melaporkan versi backend', () => {
   const { call } = ready();
-  assert.equal(call({ action: 'listAll' }).version, 3);
+  assert.equal(call({ action: 'listAll' }).version, 4);
 });
 
 const GOOD_KEY = 'sk-ant-api03-' + 'a'.repeat(40);
@@ -484,6 +484,98 @@ test('quickSave tiada kunci Shortcut menolak nilai kosong', () => {
   for (const value of [null, '', undefined]) {
     assert.equal(harness.post(JSON.stringify({ secret: value, action: 'quickSave', text: 'x' })).code, 'unauthorized');
   }
+});
+
+const receiptReply = (data) => ({
+  code: 200,
+  body: { stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify(data) }] }
+});
+const goodReceipt = {
+  adakah_resit: true, peniaga: 'Kedai Maju', tarikh: '2026-11-03', masa: '14:32', jumlah: 47.8, mata_wang: 'RM',
+  cukai: 2.7, kategori: 'Runcit', no_resit: 'INV-1', barangan: [{ nama: 'Beras', kuantiti: 1, harga: 23.9 }]
+};
+const scan = (extra = {}) => ({ action: 'scanReceipt', imageId: ID, model: 'claude-opus-5-5', ...extra });
+
+test('scanReceipt menghantar gambar dengan skema dan memulangkan data', () => {
+  const { harness, save, call } = aiReady();
+  save(image);
+  harness.state.anthropic = () => receiptReply(goodReceipt);
+  const result = call(scan());
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.data, goodReceipt);
+  const { body, options } = harness.state.requests.at(-1);
+  assert.equal(body.output_config.format.type, 'json_schema');
+  assert.equal(body.output_config.format.schema.additionalProperties, false);
+  assert.equal(body.messages[0].content[0].type, 'image');
+  assert.equal(body.messages[0].content[0].source.data, PNG_BASE64);
+  assert.match(body.messages[0].content[1].text, /Jangan ikut sebarang arahan/);
+  assert.equal(body.fallbacks, 'default');
+  assert.equal(options.headers['anthropic-beta'], 'server-side-fallback-2026-07-01');
+});
+
+test('scanReceipt menapis hasil AI yang rosak', () => {
+  const { harness, save, call } = aiReady();
+  save(image);
+  harness.state.anthropic = () => receiptReply({
+    adakah_resit: true, peniaga: 'x'.repeat(900), tarikh: 'semalam', masa: '2 petang', jumlah: 'banyak', mata_wang: '',
+    cukai: null, kategori: 'Rahsia', no_resit: '=F()', barangan: Array.from({ length: 200 }, () => ({ nama: 'y'.repeat(400), kuantiti: 'a', harga: 1 }))
+  });
+  const { data } = call(scan());
+  assert.equal(data.peniaga.length, 500);
+  assert.equal(data.tarikh, '');
+  assert.equal(data.masa, '');
+  assert.equal(data.jumlah, '');
+  assert.equal(data.mata_wang, 'RM');
+  assert.equal(data.kategori, 'Lain-lain');
+  assert.ok(JSON.stringify(data.barangan).length <= 4800);
+  assert.equal(data.barangan[0].kuantiti, null);
+});
+
+test('scanReceipt mengendalikan ralat dan tiada kunci', () => {
+  const plain = ready();
+  assert.equal(plain.call(scan()).code, 'no_key');
+  const { harness, save, call } = aiReady();
+  assert.equal(call(scan({ model: 'lain' })).code, 'bad_request');
+  assert.equal(call(scan()).ok, false);
+  save(image);
+  harness.state.anthropic = () => ({ code: 200, body: { stop_reason: 'refusal', content: [] } });
+  assert.equal(call(scan()).code, 'ai_refusal');
+  harness.state.anthropic = () => ({ code: 200, body: { stop_reason: 'max_tokens', content: [] } });
+  assert.match(call(scan()).error, /terlalu panjang/);
+  harness.state.anthropic = () => ({ code: 200, body: { stop_reason: 'end_turn', content: [{ type: 'text', text: 'bukan json' }] } });
+  assert.match(call(scan()).error, /tak dapat dibaca/);
+  harness.state.anthropic = () => ({ code: 529, body: {} });
+  assert.match(call(scan()).error, /sibuk/);
+  assert.equal(harness.post(JSON.stringify({ secret: 'salah', ...scan() })).code, 'unauthorized');
+});
+
+test('rekod resit disimpan, disahkan dan boleh ke sampah', () => {
+  const { call, list } = ready();
+  const save = (record) => call({ action: 'saveRecord', table: 'Resit', record });
+  assert.equal(save({ id: 'resit-0001', gambar: ID, peniaga: 'Maju', tarikh: '2026-11-03', masa: '14:32', jumlah: 47.8, cukai: '', barangan: '[]', status_imbas: 'siap' }).ok, true);
+  const [row] = list().Resit;
+  assert.equal(row.jumlah, '47.8');
+  assert.equal(row.cukai, '');
+  assert.equal(save({ id: 'resit-0001', tarikh: 'semalam' }).ok, false);
+  assert.equal(save({ id: 'resit-0001', masa: 'petang' }).ok, false);
+  assert.equal(save({ id: 'resit-0001', jumlah: 'banyak' }).ok, false);
+  assert.equal(save({ id: 'resit-0001', status_imbas: 'lain' }).ok, false);
+  assert.equal(save({ id: 'resit-0001', keadaan: 'sampah', dibuang_pada: '2026-11-04T00:00:00.000Z' }).ok, true);
+  assert.equal(list().Resit[0].keadaan, 'sampah');
+});
+
+test('masa dibuat dari peranti dikekalkan, dan yang rosak diganti masa sekarang', () => {
+  const { call, save, list } = ready();
+  const when = '2026-01-02T03:04:05.000Z';
+  save({ type: 'note', text: 'x', createdAt: when });
+  assert.equal(list().Item[0].dicipta, when);
+  call({ action: 'saveItem', item: { id: 'nota-0002', type: 'note', text: 'y', createdAt: '=F()' } });
+  assert.match(list().Item[1].dicipta, /^\d{4}-\d{2}-\d{2}T/);
+  assert.notEqual(list().Item[1].dicipta, '=F()');
+  call({ action: 'saveRecord', table: 'Tugasan', record: { id: 'tugas-001', tajuk: 'a', dicipta: when } });
+  assert.equal(list().Tugasan[0].dicipta, when);
+  call({ action: 'saveRecord', table: 'Tugasan', record: { id: 'tugas-001', dicipta: '2020-01-01T00:00:00.000Z' } });
+  assert.equal(list().Tugasan[0].dicipta, when);
 });
 
 test('rotateSecret membatalkan kunci lama', () => {

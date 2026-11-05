@@ -1,6 +1,6 @@
 // Papan kanban. Kad dialih dengan tetikus, atau tekan lama di skrin sentuh.
 import { deleteRecord, findRecord, idList, newId, render, state, writeRecord } from '../lib/data.js';
-import { askConfirm, askText, field, h, icon, openModal, openSheet, toast } from '../lib/dom.js';
+import { askConfirm, askText, field, formatDate, h, icon, openModal, openSheet, toast } from '../lib/dom.js';
 import { attachmentEditor, imageHolder } from '../lib/images.js';
 import { manageButtons, trashRecord } from './manage.js';
 import { askAiButton } from './ai.js';
@@ -198,9 +198,10 @@ function cardElement(card) {
   },
   firstImage && imageHolder(firstImage, 'card-image'),
   h('span', { class: 'card-title' }, card.tajuk),
-  (card.nota || moreImages.length > 0) && h('span', { class: 'card-meta' },
+  h('span', { class: 'card-meta' },
     card.nota && h('span', {}, icon('note')),
-    moreImages.length > 0 && h('span', {}, icon('clip'), String(moreImages.length + 1))));
+    moreImages.length > 0 && h('span', {}, icon('clip'), String(moreImages.length + 1)),
+    h('span', {}, formatDate(card.dicipta))));
   enableDrag(element, card);
   return element;
 }
@@ -327,7 +328,7 @@ export function openCard(id) {
 
   dialog = openSheet({
     title: card.tajuk,
-    kicker: 'Kad',
+    kicker: 'Dibuat ' + formatDate(card.dicipta),
     onClose: () => { if (!saved) attachments.discard(); },
     body: [
       h('div', { class: 'sheet-actions' }, askAiButton(() => ({

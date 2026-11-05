@@ -1,6 +1,6 @@
 // Senarai tugasan, dikumpul ikut tarikh.
 import { findRecord, idList, newId, state, writeRecord } from '../lib/data.js';
-import { celebrate, emptyState, field, h, icon, openSheet, toast } from '../lib/dom.js';
+import { celebrate, emptyState, field, formatDate, h, icon, openSheet, toast } from '../lib/dom.js';
 import { attachmentEditor } from '../lib/images.js';
 import { manageButtons } from './manage.js';
 import { askAiButton } from './ai.js';
@@ -49,10 +49,11 @@ function taskRow(task) {
     }),
     h('button', { class: 'task-main', type: 'button', onclick: () => openTask(task.id) },
       h('span', { class: 'task-title' }, task.tajuk),
-      (task.tarikh_akhir || task.nota || images > 0) && h('span', { class: 'task-meta' },
-        task.tarikh_akhir && h('span', { class: late ? 'late' : '' }, dueLabel(task.tarikh_akhir)),
+      h('span', { class: 'task-meta' },
+        task.tarikh_akhir && h('span', { class: late ? 'late' : '' }, 'Tarikh akhir: ' + dueLabel(task.tarikh_akhir)),
         task.nota && h('span', {}, icon('note')),
-        images > 0 && h('span', {}, icon('clip'), String(images)))));
+        images > 0 && h('span', {}, icon('clip'), String(images)),
+        h('span', {}, 'Dibuat ' + formatDate(task.dicipta)))));
 }
 
 function group(label, tasks, className = '') {
@@ -145,7 +146,7 @@ export function openTask(id) {
 
   dialog = openSheet({
     title: task.tajuk,
-    kicker: 'Tugasan',
+    kicker: 'Dibuat ' + formatDate(task.dicipta),
     onClose: () => { if (!saved) attachments.discard(); },
     body: [
       h('div', { class: 'sheet-actions' }, askAiButton(() => ({

@@ -10,6 +10,7 @@ App peribadi untuk simpan screenshot, link, nota, tugasan, kad kanban, kelas onl
 | **Papan** | Kanban dengan lajur yang boleh ditambah dan kad yang boleh diseret |
 | **Kelas** | Link, akaun, password disulitkan, dan rekod dah buka atau belum |
 | **Tonton** | Video YouTube, TikTok dan Facebook dimainkan terus dalam app |
+| **Resit** | Ambil gambar resit, dan AI isikan peniaga, tarikh, jumlah dan barangan |
 | **Tanya AI** | Tanya apa saja, atau minta AI huraikan screenshot dan rekod kau |
 | **Arkib** | Rekod yang keluar dari senarai harian, tapi kekal untuk dirujuk |
 | **Sampah** | Rekod yang dipadam, boleh dipulihkan dalam 30 hari |
@@ -98,6 +99,19 @@ Shortcut guna **kunci Shortcut** yang berasingan daripada kunci rahsia. Ia cuma 
 - Rekod Info Penting tak muncul di Semua, Screenshot, Link dan Nota. Carian hanya melihat tajuknya.
 - Tanya AI hanya menerima tajuknya, kecuali kau bertanya terus dari rekod tersebut.
 - Ini penyorok paparan, bukan penyulitan. Isinya masih biasa dalam Drive dan Sheet, jadi jangan simpan password di sini. Gunakan Kelas untuk password.
+
+## Resit
+
+Tekan **Ambil gambar** di halaman Resit. Resit terus dimuat naik dan AI mengisi datanya, dipaparkan di sebelah gambar.
+
+- **Perlu kunci API:** sama seperti Tanya AI, dan setiap imbasan dicaj kepada akaun API kau. Model ikut pilihan dalam panel Tanya AI.
+- **Semak hasilnya:** AI boleh tersilap baca, terutama resit kabur atau pudar. Semua medan boleh dibetulkan.
+- **Tiada kunci atau gagal:** resit tetap tersimpan, dan boleh diimbas kemudian dengan **Imbas dengan AI**.
+- **Jumlah bulanan:** dikira ikut tarikh resit, dan diasingkan ikut mata wang.
+
+## Tarikh dan masa
+
+Semua rekod menunjukkan tarikh dan masa ia dibuat. Item yang menunggu internet kekal dengan masa ia dibuat di peranti, bukan masa ia sampai ke Google. Masa ini ikut jam peranti kau.
 
 ## Pindah, Arkib dan Sampah
 

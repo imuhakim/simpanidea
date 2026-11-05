@@ -6,18 +6,21 @@ import { displayTitle, infoTitle, openItem } from './library.js';
 import { openTask } from './tasks.js';
 import { openCard } from './board.js';
 import { openClass } from './classes.js';
+import { openReceipt } from './receipts.js';
 import { restoreRecord } from './manage.js';
 
 const SECTIONS = [
   { table: 'Item', label: 'Simpanan', icon: 'inbox', open: openItem },
   { table: 'Tugasan', label: 'Tugasan', icon: 'tasks', open: openTask },
   { table: 'Kad', label: 'Papan', icon: 'board', open: openCard },
-  { table: 'Kelas', label: 'Kelas', icon: 'class', open: openClass }
+  { table: 'Kelas', label: 'Kelas', icon: 'class', open: openClass },
+  { table: 'Resit', label: 'Resit', icon: 'receipt', open: openReceipt }
 ];
 
 function titleOf(table, record) {
   if (table === 'Item' && record.ruang === 'info') return infoTitle(itemFromRow(record));
   if (table === 'Item') return displayTitle(itemFromRow(record));
+  if (table === 'Resit') return record.peniaga || 'Resit';
   return record.tajuk || record.nama || 'Tanpa tajuk';
 }
 
@@ -99,7 +102,7 @@ export function renderTrash() {
             thumbFor(table, record, section.icon),
             h('span', { class: 'row-text' },
               h('span', { class: 'row-title' }, titleOf(table, record)),
-              h('span', { class: 'row-sub' }, left + ' hari lagi'))),
+              h('span', { class: 'row-sub' }, 'Dibuang ' + formatDate(record.dibuang_pada) + ', ' + left + ' hari lagi'))),
           h('div', { class: 'row-side' },
             h('button', {
               class: 'button',
