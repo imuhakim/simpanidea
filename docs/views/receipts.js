@@ -4,6 +4,7 @@ import { emptyState, field, formatDate, h, icon, openModal, openSheet, toast } f
 import { imageHolder, imageUrlFor, openImage, photoButtons } from '../lib/images.js';
 import { askAiButton, currentModel } from './ai.js';
 import { manageButtons } from './manage.js';
+import { voiceButton } from './voice.js';
 import { applyAutoMatch, isPaidByTng, paymentSummary, receiptPaymentBlock, statementButton } from './payments.js';
 
 const CATEGORIES = ['Makanan', 'Runcit', 'Minyak', 'Pengangkutan', 'Utiliti', 'Perubatan', 'Pakaian', 'Kerja', 'Lain-lain'];
@@ -159,7 +160,7 @@ function receiptRow(receipt) {
       h('span', { class: 'row-text' },
         h('span', { class: 'row-title' }, receipt.peniaga || 'Resit'),
         h('span', { class: 'row-sub' + (label ? ' row-state' + (receipt.status_imbas === 'gagal' ? ' failed' : '') : '') }, label || details),
-        h('span', { class: 'row-when' }, 'Dimuat naik ' + formatDate(receipt.dicipta))),
+        h('span', { class: 'row-when' }, (receipt.gambar ? 'Dimuat naik ' : 'Dicatat ') + formatDate(receipt.dicipta))),
       h('span', { class: 'receipt-amount' }, formatAmount(receipt.jumlah, receipt.mata_wang))));
 }
 
@@ -174,8 +175,8 @@ export function renderReceipts() {
   }
   return h('div', { class: 'page' },
     h('div', { class: 'page-head' },
-      h('p', { class: 'page-note' }, 'Ambil gambar resit, dan AI isikan peniaga, tarikh, jumlah dan barangan.'),
-      h('div', { class: 'button-row' }, photoButtons(addReceiptFiles), statementButton())),
+      h('p', { class: 'page-note' }, 'Ambil gambar resit, atau tekan Cakap untuk mencatat perbelanjaan. AI isikan kategori, tarikh dan jumlah.'),
+      h('div', { class: 'button-row' }, photoButtons(addReceiptFiles), voiceButton(), statementButton())),
     paymentSummary(),
     !receipts.length && emptyState('Belum ada resit', 'Ambil gambar resit pertama anda. Imbasan perlukan kunci API di Tetapan.'),
     [...months].map(([key, list]) => [
@@ -253,14 +254,14 @@ export function openReceipt(id) {
 
   dialog = openSheet({
     title: receipt.peniaga || 'Resit',
-    kicker: 'Dimuat naik ' + formatDate(receipt.dicipta),
-    body: h('div', { class: 'receipt-split' },
-      h('div', { class: 'receipt-image' }, frame),
+    kicker: (receipt.gambar ? 'Dimuat naik ' : 'Dicatat ') + formatDate(receipt.dicipta),
+    body: h('div', { class: 'receipt-split' + (receipt.gambar ? '' : ' no-image') },
+      receipt.gambar && h('div', { class: 'receipt-image' }, frame),
       h('div', { class: 'receipt-data' },
         notice && h('p', { class: 'form-note' }, notice),
         receipt.status_imbas === 'siap' && h('p', { class: 'form-note' }, 'Diisi oleh AI. Semak sebelum bergantung padanya.'),
         h('div', { class: 'sheet-actions' },
-          h('button', {
+          receipt.gambar && h('button', {
             class: 'button',
             type: 'button',
             disabled: busy,

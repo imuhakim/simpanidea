@@ -315,7 +315,8 @@ export function openItem(id) {
       label: displayTitle(item),
       text: 'Jenis: ' + (TYPE_LABEL[item.type] || 'Item') + '\nTajuk: ' + titleInput.value +
         '\nCatatan: ' + textInput.value + (item.url ? '\nLink: ' + item.url : ''),
-      imageIds: item.type === 'image' ? [item.id] : idList(attachments.value())
+      imageIds: item.type === 'image' ? [item.id] : idList(attachments.value()),
+      hidden: item.ruang === 'info'
     })),
     video && h('a', { class: 'button primary', href: '#watch', onclick: () => {
       state.watchTarget = item.id;

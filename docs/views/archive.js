@@ -8,13 +8,15 @@ import { openCard } from './board.js';
 import { openClass } from './classes.js';
 import { openReceipt } from './receipts.js';
 import { restoreRecord } from './manage.js';
+import { openConversation } from './ai.js';
 
 const SECTIONS = [
   { table: 'Item', label: 'Simpanan', icon: 'inbox', open: openItem },
   { table: 'Tugasan', label: 'Tugasan', icon: 'tasks', open: openTask },
   { table: 'Kad', label: 'Papan', icon: 'board', open: openCard },
   { table: 'Kelas', label: 'Kelas', icon: 'class', open: openClass },
-  { table: 'Resit', label: 'Resit', icon: 'receipt', open: openReceipt }
+  { table: 'Resit', label: 'Resit', icon: 'receipt', open: openReceipt },
+  { table: 'Perbualan', label: 'Tanya AI', icon: 'sparkle', open: openConversation }
 ];
 
 function titleOf(table, record) {

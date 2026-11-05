@@ -13,6 +13,8 @@ import { lockVault } from './views/classes.js';
 import { renderArchive, renderTrash } from './views/archive.js';
 import { openReceiptAdd, renderReceipts } from './views/receipts.js';
 import { clearAiChat, openAi } from './views/ai.js';
+import { greetingFor, userName } from './lib/profile.js';
+import { askNameIfNeeded } from './views/profile.js';
 
 const VIEWS = {
   ...LIBRARY_VIEWS,
@@ -148,7 +150,12 @@ function drawMain() {
   const pageTop = window.scrollY;
   const focusKey = main.contains(document.activeElement) ? document.activeElement.dataset.keepFocus : null;
 
-  main.replaceChildren(view());
+  // Sapaan hanya di halaman pembuka, supaya halaman lain kekal padat.
+  const name = userName();
+  const greeting = !searching && name && state.view === startView()
+    ? h('p', { class: 'greeting' }, greetingFor(name, new Date().getHours()))
+    : null;
+  main.replaceChildren(...[greeting, view()].filter(Boolean));
 
   if (focusKey) main.querySelector(`[data-keep-focus="${CSS.escape(focusKey)}"]`)?.focus();
 
@@ -317,7 +324,10 @@ async function start() {
       hideAllInfo();
       render();
     },
-    onChange: renderChrome
+    onChange: () => {
+      renderChrome();
+      askNameIfNeeded();
+    }
   });
   lockNow();
   setupAutoLock();
@@ -383,6 +393,8 @@ async function start() {
   await setupServiceWorker();
   render();
   await refresh();
+  // Selepas segerak, supaya nama yang sudah ada dari peranti lain tidak ditanya semula.
+  askNameIfNeeded();
   await processQueue();
 }
 

@@ -1,4 +1,5 @@
 // Tetapan: sambungan Google, pemasangan app dan perubahan yang gagal dihantar.
+import { renderNameSettings } from './profile.js';
 import { callBackend, isAllowedBackend, loadQueue, loadSettings, processQueue, refresh, render, saveSettings, state } from '../lib/data.js';
 import { askConfirm, copyText, field, h, icon, toast } from '../lib/dom.js';
 import { renderLockSettings } from './lock.js';
@@ -169,6 +170,7 @@ export function renderSettings() {
   h('button', { class: 'button primary', type: 'submit' }, 'Simpan dan uji'));
 
   const page = h('div', { class: 'settings' },
+    renderNameSettings(),
     h('section', {}, h('h2', {}, 'Sambungan Google'), form),
     renderShortcutGuide(),
     renderAiSettings(),

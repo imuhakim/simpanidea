@@ -1251,6 +1251,7 @@ dialog::backdrop { background: var(--overlay); backdrop-filter: blur(3px); anima
   .ai-button { width: 40px; padding: 0; }
 }
 .ai-panel-body { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+.ai-history { flex: 1; min-height: 0; padding: 14px 16px; overflow-y: auto; }
 .ai-sheet .sheet-body > .ai-panel-body { height: 100%; }
 .ai-setup-inline ol { margin: 0 0 14px; padding-left: 20px; color: var(--ink-2); }
 .ai-setup-inline a { color: var(--tone-fg); font-weight: 600; }
@@ -1307,6 +1308,12 @@ dialog::backdrop { background: var(--overlay); backdrop-filter: blur(3px); anima
 .receipt-split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 22px; align-items: start; }
 .receipt-image { position: sticky; top: 0; }
 .receipt-image .sheet-image { margin-bottom: 0; min-height: 200px; }
+.receipt-split.no-image { grid-template-columns: minmax(0, 1fr); }
+.greeting { max-width: 880px; margin: 0 auto 14px; font-size: 18px; font-weight: 720; letter-spacing: -.02em; animation: rise .3s var(--ease); }
+.voice-modal .voice-mic { width: 100%; justify-content: center; min-height: 52px; margin-bottom: 12px; white-space: normal; }
+.voice-mic.listening { border-color: var(--bad); color: var(--bad); animation: mic-pulse 1.4s ease-in-out infinite; }
+.voice-modal .field-hint { display: block; margin-top: 8px; }
+@keyframes mic-pulse { 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--bad) 18%, transparent); } }
 .receipt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .receipt-item { display: grid; grid-template-columns: minmax(0, 1fr) 62px 82px 34px; gap: 6px; align-items: center; margin-bottom: 6px; animation: rise .2s var(--ease); }
 .receipt-item .icon-button { width: 34px; height: 34px; }

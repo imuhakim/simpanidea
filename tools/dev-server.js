@@ -39,11 +39,17 @@ const FAKE_STATEMENT = {
     { tarikh: '2026-11-01', masa: '09:00', keterangan: 'Tambah nilai', jumlah: 100, arah: 'masuk', mata_wang: 'RM', rujukan: 'TNG-1004', jenis: 'Tambah nilai' }
   ]
 };
+const FAKE_EXPENSES = {
+  perbelanjaan: [
+    { peniaga: 'Restoran Selera', tarikh: '2026-11-05', masa: '', jumlah: 12, mata_wang: 'RM', kategori: 'Makanan', barangan: [{ nama: 'Nasi lemak', kuantiti: 1, harga: 12 }] },
+    { peniaga: 'Minyak', tarikh: '2026-11-04', masa: '', jumlah: 50, mata_wang: 'RM', kategori: 'Minyak', barangan: [{ nama: 'Isi minyak', kuantiti: null, harga: null }] }
+  ]
+};
 const fakeStructured = (data) => ({ stop_reason: 'end_turn', model: 'claude-opus-5-5', usage: { input_tokens: 900, output_tokens: 120 }, content: [{ type: 'text', text: JSON.stringify(data) }] });
 harness.state.anthropic = (url, options) => ({
   code: 200,
   body: url.endsWith('/messages') && JSON.parse(options.payload).output_config.format
-    ? JSON.parse(options.payload).output_config.format.schema.properties.transaksi ? fakeStructured(FAKE_STATEMENT) : { stop_reason: 'end_turn', model: 'claude-opus-5-5', usage: { input_tokens: 900, output_tokens: 120 }, content: [{ type: 'text', text: JSON.stringify(FAKE_RECEIPT) }] }
+    ? JSON.parse(options.payload).output_config.format.schema.properties.perbelanjaan ? fakeStructured(FAKE_EXPENSES) : JSON.parse(options.payload).output_config.format.schema.properties.transaksi ? fakeStructured(FAKE_STATEMENT) : { stop_reason: 'end_turn', model: 'claude-opus-5-5', usage: { input_tokens: 900, output_tokens: 120 }, content: [{ type: 'text', text: JSON.stringify(FAKE_RECEIPT) }] }
     : url.endsWith('/messages')
     ? {
       stop_reason: 'end_turn',

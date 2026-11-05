@@ -2,10 +2,12 @@
 // Kunci API disimpan di backend sahaja, dan tidak pernah dibaca semula oleh app.
 import { addItems, callBackend, firstColumnId, isConfigured, newId, newItem, state, writeRecord } from '../lib/data.js';
 import { buildAiContext } from '../lib/ai-context.js';
-import { copyText, field, h, icon, openSheet, toast } from '../lib/dom.js';
-import { splitTitle } from './manage.js';
+import { copyText, emptyState, field, formatDate, h, icon, openSheet, toast } from '../lib/dom.js';
+import { userName } from '../lib/profile.js';
+import { restoreRecord, splitTitle, trashRecord } from './manage.js';
 
 const MODEL_KEY = 'simpanidea.ai-model';
+const TITLE_LENGTH = 120;
 const CONSOLE_URL = 'https://console.anthropic.com/settings/keys';
 const MODELS = [
   { id: 'claude-opus-5-5', label: 'Opus 5.5, paling pintar' },
@@ -17,16 +19,25 @@ const IMAGE_SUGGESTIONS = ['Huraikan screenshot ini', 'Apa isi penting dalam gam
 const ITEM_SUGGESTIONS = ['Huraikan item ini', 'Apa langkah seterusnya?', 'Cadangkan soalan berkaitan'];
 
 let messages = [];
+let conversationId = null;
 let focus = null;
 let useData = true;
 let busy = false;
 let sheet = null;
 let chatBox = null;
 let composeBox = null;
+let panelBody = null;
+let historyButton = null;
+let showingHistory = false;
 let aiConfigured = null;
 
-export function clearAiChat() {
+function resetChat() {
   messages = [];
+  conversationId = null;
+}
+
+export function clearAiChat() {
+  resetChat();
   focus = null;
 }
 
@@ -81,6 +92,136 @@ function renderMarkdown(text) {
   return blocks;
 }
 
+/* Sejarah: setiap soalan dan jawapan disimpan dalam Sheet supaya boleh dirujuk semula. */
+function saveMessage(role, text, { model = '', parentId = conversationId, at = new Date().toISOString() } = {}) {
+  return writeRecord('MesejAI', { id: newId(), dicipta: at, perbualan_id: parentId, peranan: role, teks: text, model });
+}
+
+function startConversation(question) {
+  conversationId = newId();
+  const [firstLine] = question.split('\n');
+  return writeRecord('Perbualan', {
+    id: conversationId,
+    tajuk: firstLine.length > TITLE_LENGTH ? firstLine.slice(0, TITLE_LENGTH) + '...' : firstLine,
+    ruang: focus && focus.hidden ? 'info' : '',
+    fokus_label: focus ? focus.label : '',
+    fokus_teks: focus ? focus.text : '',
+    gambar_rujukan: focus ? focus.imageIds.join(',') : ''
+  });
+}
+
+async function recordQuestion(question) {
+  // Masa diambil sekarang: jawapan boleh sampai sebelum soalan selesai ditulis ke storan.
+  const at = new Date().toISOString();
+  try {
+    // Id dipegang di sini kerana pengguna boleh memulakan perbualan baru sementara menunggu.
+    const starting = conversationId ? null : startConversation(question);
+    const parentId = conversationId;
+    await starting;
+    await saveMessage('user', question, { at, parentId });
+  } catch (err) {
+    toast('Soalan tidak dapat disimpan ke Sejarah: ' + err.message, true);
+  }
+}
+
+const messagesOf = (id) => state.raw.MesejAI
+  .filter((message) => message.perbualan_id === id)
+  .sort((a, b) => String(a.dicipta).localeCompare(String(b.dicipta)));
+
+function loadConversation(id) {
+  const conversation = state.raw.Perbualan.find((record) => record.id === id);
+  if (!conversation) return false;
+  conversationId = id;
+  messages = messagesOf(id).map((message) => ({ role: message.peranan, text: message.teks, model: message.model }));
+  // Gambar yang sudah dibuang tidak boleh dihantar semula kepada AI.
+  const imageIds = String(conversation.gambar_rujukan || '').split(',')
+    .filter((imageId) => state.tables.Item.some((item) => item.id === imageId));
+  focus = conversation.fokus_label || conversation.fokus_teks
+    ? { label: conversation.fokus_label, text: conversation.fokus_teks, imageIds, hidden: conversation.ruang === 'info' }
+    : null;
+  return true;
+}
+
+/** Dibuka dari Carian. */
+export function openConversation(id) {
+  if (busy) {
+    toast('Tunggu AI selesai menjawab dahulu', true);
+    return;
+  }
+  if (loadConversation(id)) openAi();
+}
+
+function historyRow(conversation) {
+  const list = messagesOf(conversation.id);
+  const last = list.at(-1);
+  const details = [list.length + ' mesej', conversation.fokus_label].filter(Boolean).join(' · ');
+  return h('article', { class: 'row' },
+    h('button', {
+      class: 'row-main',
+      type: 'button',
+      onclick: () => {
+        if (busy) {
+          toast('Tunggu AI selesai menjawab dahulu', true);
+          return;
+        }
+        loadConversation(conversation.id);
+        showChat();
+      }
+    },
+    h('span', { class: 'thumb' }, icon(conversation.ruang === 'info' ? 'lock' : 'sparkle')),
+    h('span', { class: 'row-text' },
+      h('span', { class: 'row-title' }, conversation.tajuk || 'Perbualan'),
+      h('span', { class: 'row-sub' }, details),
+      h('span', { class: 'row-when' }, formatDate(last ? last.dicipta : conversation.dicipta)))),
+    h('div', { class: 'row-side' },
+      h('button', {
+        class: 'icon-button',
+        type: 'button',
+        'aria-label': 'Padam perbualan: ' + (conversation.tajuk || 'Perbualan'),
+        title: 'Padam',
+        onclick: async () => {
+          if (conversationId === conversation.id) {
+            resetChat();
+            focus = null;
+          }
+          await trashRecord('Perbualan', conversation.id);
+          drawHistory();
+          toast('Dialih ke Sampah', false, {
+            label: 'Batal',
+            onClick: async () => {
+              await restoreRecord('Perbualan', conversation.id);
+              drawHistory();
+            }
+          });
+        }
+      }, icon('trash'))));
+}
+
+function drawHistory() {
+  if (!panelBody || !showingHistory) return;
+  const latest = (conversation) => {
+    const last = messagesOf(conversation.id).at(-1);
+    return String(last ? last.dicipta : conversation.dicipta);
+  };
+  const conversations = [...state.tables.Perbualan].sort((a, b) => latest(b).localeCompare(latest(a)));
+  panelBody.replaceChildren(h('div', { class: 'ai-history' },
+    conversations.length
+      ? h('div', { class: 'rows' }, conversations.map(historyRow))
+      : emptyState('Belum ada sejarah', 'Soalan dan jawapan anda akan tersimpan di sini.')));
+}
+
+function showHistory() {
+  showingHistory = true;
+  if (historyButton) historyButton.textContent = 'Kembali';
+  drawHistory();
+}
+
+function showChat() {
+  showingHistory = false;
+  if (historyButton) historyButton.textContent = 'Sejarah';
+  if (panelBody) drawPanelBody(panelBody);
+}
+
 /* Simpan jawapan */
 async function saveAnswer(kind, text) {
   const { title, text: body } = splitTitle('', text);
@@ -133,7 +274,7 @@ function drawChat() {
     const hasImage = focus && focus.imageIds.length;
     const suggestions = focus ? (hasImage ? IMAGE_SUGGESTIONS : ITEM_SUGGESTIONS) : GENERAL_SUGGESTIONS;
     children.push(h('div', { class: 'ai-intro' },
-      h('h3', {}, focus ? 'Tanya tentang item ini' : 'Tanya apa saja'),
+      h('h3', {}, focus ? 'Tanya tentang item ini' : userName() ? 'Hai ' + userName() + ', tanya apa saja' : 'Tanya apa saja'),
       h('p', {}, focus
         ? (hasImage ? 'AI boleh lihat gambar ini dan menjawab berdasarkannya.' : 'AI akan menjawab berdasarkan item ini.')
         : 'Soalan umum, atau tentang simpanan anda.'),
@@ -216,7 +357,12 @@ function drawCompose() {
 
 async function ask(text) {
   if (busy) return;
-  if (text) messages.push({ role: 'user', text });
+  if (text) {
+    messages.push({ role: 'user', text });
+    recordQuestion(text);
+  }
+  // Pengguna mungkin memulakan perbualan baru sementara menunggu jawapan ini.
+  const askedIn = conversationId;
   busy = true;
   drawChat();
   const history = messages
@@ -229,6 +375,7 @@ async function ask(text) {
       action: 'aiChat',
       model: currentModel(),
       messages: history,
+      userName: userName(),
       context: useData ? buildAiContext(state.raw, { today: new Date().toISOString().slice(0, 10), view: viewName }) : '',
       focus: focus ? focus.text : '',
       imageIds: focus ? focus.imageIds : []
@@ -246,7 +393,11 @@ async function ask(text) {
   } catch {
     reply = { role: 'assistant', error: 'Tidak dapat sampai ke Google. Semak internet, atau soalan mungkin mengambil masa terlalu lama.' };
   }
-  messages.push(reply);
+  if (conversationId === askedIn) messages.push(reply);
+  if (!reply.error && askedIn) {
+    saveMessage('assistant', reply.text, { model: reply.model, parentId: askedIn })
+      .catch((err) => toast('Jawapan tidak dapat disimpan ke Sejarah: ' + err.message, true));
+  }
   busy = false;
   drawChat();
 }
@@ -364,11 +515,18 @@ function drawPanelBody(body) {
 /** Buka panel. Kalau item lain dipilih, perbualan bermula semula supaya jawapan tidak bercampur. */
 export async function openAi({ focus: newFocus } = {}) {
   if (newFocus) {
-    if (!focus || focus.text !== newFocus.text) messages = [];
-    focus = { label: newFocus.label, text: newFocus.text, imageIds: newFocus.imageIds || [] };
+    if (!focus || focus.text !== newFocus.text) resetChat();
+    focus = { label: newFocus.label, text: newFocus.text, imageIds: newFocus.imageIds || [], hidden: Boolean(newFocus.hidden) };
   }
   if (sheet) sheet.close();
   const body = h('div', { class: 'ai-panel-body' });
+  panelBody = body;
+  showingHistory = false;
+  historyButton = h('button', {
+    class: 'button plain',
+    type: 'button',
+    onclick: () => (showingHistory ? showChat() : showHistory())
+  }, 'Sejarah');
   sheet = openSheet({
     title: 'Tanya AI',
     kicker: 'Claude',
@@ -377,16 +535,18 @@ export async function openAi({ focus: newFocus } = {}) {
       sheet = null;
       chatBox = null;
       composeBox = null;
+      panelBody = null;
+      historyButton = null;
+      showingHistory = false;
     },
     actions: [
+      historyButton,
       h('button', {
         class: 'button plain',
         type: 'button',
         onclick: () => {
-          messages = [];
-          focus = null;
-          drawChat();
-          drawCompose();
+          clearAiChat();
+          showChat();
         }
       }, 'Perbualan baru')
     ]
@@ -394,5 +554,5 @@ export async function openAi({ focus: newFocus } = {}) {
   sheet.classList.add('ai-sheet');
 
   await loadStatus();
-  if (sheet) drawPanelBody(body);
+  if (sheet && !showingHistory) drawPanelBody(body);
 }

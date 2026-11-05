@@ -5,6 +5,7 @@ import { parseVideo } from '../docs/lib/video.js';
 import { buildAiContext } from '../docs/lib/ai-context.js';
 import { createVault, decrypt, encrypt, unlockVault } from '../docs/lib/vault.js';
 import { autoMatches, dayGap, linkedReceipt, matchCandidates, paymentForReceipt, sameAmount } from '../docs/lib/payments.js';
+import { cleanName, greetingFor } from '../docs/lib/profile.js';
 import { createPinRecord, isValidPin, isWeakPin, lockoutSeconds, verifyPin } from '../docs/lib/pin.js';
 
 test('YouTube dikenali dari semua bentuk link biasa', () => {
@@ -208,4 +209,24 @@ test('buildAiContext menyenaraikan bayaran tanpa rujukan, dan menghadkan bilanga
   assert.equal((text.match(/KEDAI/g) || []).length, 200);
   assert.ok(!text.includes('SULIT-RUJUKAN'));
   assert.ok(!text.includes('DIABAIKAN'));
+});
+
+test('buildAiContext tidak menghantar sejarah perbualan', () => {
+  const text = buildAiContext({
+    Perbualan: [{ id: 'b', tajuk: 'TAJUK-BUAL' }],
+    MesejAI: [{ id: 'm', perbualan_id: 'b', peranan: 'assistant', teks: 'ISI-JAWAPAN' }]
+  }, { today: '2026-11-05', view: 'inbox' });
+  assert.ok(!text.includes('TAJUK-BUAL'));
+  assert.ok(!text.includes('ISI-JAWAPAN'));
+});
+
+test('sapaan mengikut waktu, dan nama dibersihkan', () => {
+  assert.equal(greetingFor('Ali', 8), 'Selamat pagi, Ali');
+  assert.equal(greetingFor('Ali', 12), 'Selamat tengah hari, Ali');
+  assert.equal(greetingFor('Ali', 16), 'Selamat petang, Ali');
+  assert.equal(greetingFor('Ali', 21), 'Selamat malam, Ali');
+  assert.equal(greetingFor('Ali', 2), 'Selamat malam, Ali');
+  assert.equal(cleanName('  Ali   Abu \n'), 'Ali Abu');
+  assert.equal(cleanName('x'.repeat(90)).length, 40);
+  assert.equal(cleanName(null), '');
 });

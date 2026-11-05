@@ -109,6 +109,15 @@ Tekan **Ambil gambar** di halaman Resit. Resit terus dimuat naik dan AI mengisi 
 - **Tiada kunci atau gagal:** resit tetap tersimpan, dan boleh diimbas kemudian dengan **Imbas dengan AI**.
 - **Jumlah bulanan:** dikira ikut tarikh resit, dan diasingkan ikut mata wang.
 
+### Catat melalui suara
+
+Tekan **Cakap** di halaman Resit dan sebut apa yang dibeli, contohnya "makan tengah hari di Restoran Selera dua belas ringgit". AI mengisi peniaga, tarikh, jumlah dan kategori, kemudian terus menyimpannya sebagai rekod tanpa gambar.
+
+- **Beberapa perbelanjaan:** boleh disebut sekali gus, dan setiap satu menjadi satu rekod.
+- **Semak hasilnya:** sebutan nombor boleh tersilap. Tekan **Batal** pada pesanan selepas menyimpan, atau betulkan dalam rekod itu.
+- **Browser:** suara bergantung pada browser, dan paling sesuai dengan Chrome di Android. Jika tiada, taip atau gunakan butang mikrofon pada papan kekunci.
+- **Privasi:** suara diproses oleh penyedia browser, seperti Google dalam Chrome. Teksnya dihantar kepada Anthropic melalui kunci API anda dan dicaj kepada akaun itu.
+
 ### Bayaran Touch 'n Go
 
 Tiada API awam ditemui untuk membaca transaksi peribadi Touch 'n Go, jadi bayaran dimasukkan melalui penyata.
@@ -151,6 +160,19 @@ Yang perlu tahu:
 - **Tidak pernah dihantar:** password, username kelas, kunci rahsia, dan rekod dalam Sampah.
 - **Kos:** setiap jawapan tunjuk jumlah token. Opus 5.5 ialah lalai dan paling mahal, manakala Haiku 5.5 paling murah. Tukar di bawah kotak soalan.
 - **Had:** soalan melalui Apps Script, jadi jawapan muncul sekali gus dan jawapan panjang boleh dipotong. AI tidak boleh mengubah data sendiri, dan tidak boleh membuka link.
+
+### Sejarah
+
+Setiap soalan dan jawapan disimpan dalam Google Sheet anda, dalam tab `Perbualan` dan `MesejAI`. Tekan **Sejarah** dalam panel Tanya AI untuk merujuk atau menyambung perbualan lama, di phone atau komputer.
+
+- **Carian:** kotak carian turut mencari isi perbualan. Perbualan tentang Info Penting hanya dicari ikut tajuk.
+- **Padam:** perbualan masuk ke Sampah dan boleh dipulihkan dalam 30 hari.
+- **Privasi:** jawapan disimpan sebagai teks biasa dalam Sheet. Password kelas tidak dihantar kepada AI, jadi ia tidak masuk ke sejarah.
+- **Kos:** menyimpan tidak dicaj, tetapi menyambung perbualan menghantar semula mesej terdahulu, sehingga 20 mesej terakhir.
+
+## Nama anda
+
+Kali pertama app dibuka, ia bertanya nama anda untuk sapaan. Nama disimpan dalam Sheet supaya sama di semua peranti, dan diberitahu kepada Tanya AI. Tukar di **Tetapan → Nama anda**.
 
 ## Kunci PIN
 
