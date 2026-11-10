@@ -323,13 +323,30 @@ export function openCard(id) {
   const columnSelect = h('select', { class: 'input' }, sortedColumns().map((column) =>
     h('option', { value: column.id, selected: column.id === card.lajur_id }, column.tajuk)));
   const attachments = attachmentEditor(card.gambar);
-  let saved = false;
+  let handled = false;
   let dialog;
+  const current = () => ({ tajuk: titleInput.value.trim() || card.tajuk, nota: noteInput.value, gambar: attachments.value(), lajur_id: columnSelect.value });
+  let baseline = JSON.stringify(current());
+  function persist() {
+    if (handled) return;
+    attachments.commit();
+    const next = current();
+    if (JSON.stringify(next) === baseline) return;
+    const before = JSON.parse(baseline);
+    baseline = JSON.stringify(next);
+    const record = { id: card.id, tajuk: next.tajuk, nota: next.nota, gambar: next.gambar };
+    if (next.lajur_id !== before.lajur_id) {
+      const last = cardsIn(next.lajur_id).filter((other) => other.id !== card.id).at(-1);
+      record.lajur_id = next.lajur_id;
+      record.kedudukan = positionBetween(last ? position(last) : null, null);
+    }
+    writeRecord('Kad', record);
+  }
 
   dialog = openSheet({
     title: card.tajuk,
     kicker: 'Dibuat ' + formatDate(card.dicipta),
-    onClose: () => { if (!saved) attachments.discard(); },
+    autosave: persist,
     body: [
       h('div', { class: 'sheet-actions' }, askAiButton(() => ({
         label: titleInput.value,
@@ -347,7 +364,7 @@ export function openCard(id) {
         id: card.id,
         read: () => ({ title: titleInput.value.trim(), text: noteInput.value, gambar: attachments.value() }),
         done: () => {
-          saved = true;
+          handled = true;
           attachments.commit();
           dialog.close();
         }
@@ -357,20 +374,10 @@ export function openCard(id) {
         class: 'button primary',
         type: 'button',
         onclick: () => {
-          const tajuk = titleInput.value.trim();
-          if (!tajuk) {
+          if (!titleInput.value.trim()) {
             toast('Kad perlukan tajuk', true);
             return;
           }
-          saved = true;
-          attachments.commit();
-          const record = { id: card.id, tajuk, nota: noteInput.value, gambar: attachments.value() };
-          if (columnSelect.value !== card.lajur_id) {
-            const last = cardsIn(columnSelect.value).at(-1);
-            record.lajur_id = columnSelect.value;
-            record.kedudukan = positionBetween(last ? position(last) : null, null);
-          }
-          writeRecord('Kad', record);
           dialog.close();
         }
       }, 'Simpan')

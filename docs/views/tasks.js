@@ -141,13 +141,24 @@ export function openTask(id) {
   const noteInput = h('textarea', { class: 'input', rows: 5, value: task.nota || '', placeholder: 'Butiran' });
   const dateInput = h('input', { class: 'input', type: 'date', value: task.tarikh_akhir || '' });
   const attachments = attachmentEditor(task.gambar);
-  let saved = false;
+  let handled = false;
   let dialog;
+  // Tajuk kosong tidak disimpan; tajuk lama dikekalkan.
+  const current = () => ({ tajuk: titleInput.value.trim() || task.tajuk, nota: noteInput.value, tarikh_akhir: dateInput.value, gambar: attachments.value() });
+  let baseline = JSON.stringify(current());
+  function persist() {
+    if (handled) return;
+    attachments.commit();
+    const next = current();
+    if (JSON.stringify(next) === baseline) return;
+    baseline = JSON.stringify(next);
+    writeRecord('Tugasan', { id: task.id, ...next });
+  }
 
   dialog = openSheet({
     title: task.tajuk,
     kicker: 'Dibuat ' + formatDate(task.dicipta),
-    onClose: () => { if (!saved) attachments.discard(); },
+    autosave: persist,
     body: [
       h('div', { class: 'sheet-actions' }, askAiButton(() => ({
         label: titleInput.value,
@@ -165,7 +176,7 @@ export function openTask(id) {
         id: task.id,
         read: () => ({ title: titleInput.value.trim(), text: noteInput.value, gambar: attachments.value() }),
         done: () => {
-          saved = true;
+          handled = true;
           attachments.commit();
           dialog.close();
         }
@@ -175,20 +186,10 @@ export function openTask(id) {
         class: 'button primary',
         type: 'button',
         onclick: () => {
-          const tajuk = titleInput.value.trim();
-          if (!tajuk) {
+          if (!titleInput.value.trim()) {
             toast('Tugasan perlukan tajuk', true);
             return;
           }
-          saved = true;
-          attachments.commit();
-          writeRecord('Tugasan', {
-            id: task.id,
-            tajuk,
-            nota: noteInput.value,
-            tarikh_akhir: dateInput.value,
-            gambar: attachments.value()
-          });
           dialog.close();
         }
       }, 'Simpan')

@@ -33,7 +33,7 @@ export function openComposer({ text = '', ruang = '', kind = '', mode = '', file
     onkeydown: (event) => {
       if (event.key !== 'Enter' || event.isComposing) return;
       event.preventDefault();
-      if (editor.value().trim() || files.length) save();
+      if (editor.value().trim() || files.length) save(false);
       else editor.focus();
     }
   });
@@ -72,19 +72,24 @@ export function openComposer({ text = '', ruang = '', kind = '', mode = '', file
   addFiles(initialFiles);
 
   let dialog;
-  async function save() {
+  let saved = false;
+  let cancelled = false;
+  /** quiet bermakna disimpan sendiri semasa panel ditutup, jadi borang kosong diabaikan tanpa amaran. */
+  async function save(quiet) {
+    if (saved || cancelled) return;
     const value = editor.value().trim();
     const title = titleInput.value.trim();
     const isChecklist = editor.mode() === 'checklist';
     const staysNote = kind === 'note' || isChecklist;
-    if (isChecklist && !value) {
-      toast('Tambah sekurang-kurangnya satu perkara', true);
+    if (isChecklist && !value && !(quiet && title)) {
+      if (!quiet) toast('Tambah sekurang-kurangnya satu perkara', true);
       return;
     }
     if (!value && !files.length && (!title || kind === 'link' || kind === 'image')) {
-      toast('Tulis sesuatu atau tambah gambar dahulu', true);
+      if (!quiet) toast('Tulis sesuatu atau tambah gambar dahulu', true);
       return;
     }
+    saved = true;
     const chosenPlace = place.value;
     // Screenshot kekal berdiri sendiri. Selain itu, gambar bersama teks menjadi lampiran nota.
     const standalone = files.length > 0 && (kind === 'image' || (!value && !staysNote));
@@ -105,7 +110,9 @@ export function openComposer({ text = '', ruang = '', kind = '', mode = '', file
       }
       dialog.close();
       await addItems(entries);
+      if (quiet) toast('Disimpan secara automatik');
     } catch (err) {
+      saved = false;
       toast(err.message, true);
     }
   }
@@ -120,10 +127,22 @@ export function openComposer({ text = '', ruang = '', kind = '', mode = '', file
     ].flat(),
     actions: [
       h('span', { class: 'foot-spacer' }),
-      h('button', { class: 'button plain', type: 'button', onclick: () => dialog.close() }, 'Batal'),
-      h('button', { class: 'button primary', type: 'button', onclick: save }, 'Simpan')
+      h('button', {
+        class: 'button plain',
+        type: 'button',
+        onclick: () => {
+          cancelled = true;
+          dialog.close();
+        }
+      }, 'Batal'),
+      h('button', { class: 'button primary', type: 'button', onclick: () => save(false) }, 'Simpan')
     ],
-    onClose: () => previewUrls.forEach((url) => URL.revokeObjectURL(url))
+    // Hanya Batal yang membuang. Menekan di luar panel atau keluar dari app tetap menyimpan.
+    autosave: () => save(true),
+    onClose: () => {
+      // Gambar mesti dibaca dahulu sebelum pautan pratonton dilepaskan.
+      setTimeout(() => previewUrls.forEach((url) => URL.revokeObjectURL(url)), 0);
+    }
   });
   // Kalau isi sudah ada, yang tinggal cuma tajuk. Di halaman Screenshot, papan kekunci jangan menutup butang gambar.
   if (text || files.length) titleInput.focus();

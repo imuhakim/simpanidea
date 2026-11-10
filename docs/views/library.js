@@ -2,7 +2,7 @@
 import { addItems, findItem, idList, imageItem, patchItem, processQueue, isConfigured, state, render, loadQueue } from '../lib/data.js';
 import { checklistSummary, checklistText, parseChecklist, readableNote } from '../lib/checklist.js';
 import { askText, celebrate, domainOf, emptyState, field, formatDate, h, icon, isWebUrl, openSheet, toast } from '../lib/dom.js';
-import { attachmentEditor, imageHolder, imageUrlFor, openImage, photoButtons } from '../lib/images.js';
+import { attachmentEditor, imageHolder, imageUrlFor, openGallery, openImage, photoButtons } from '../lib/images.js';
 import { parseVideo } from '../lib/video.js';
 import { archiveWithUndo, manageButtons } from './manage.js';
 import { askAiButton } from './ai.js';
@@ -138,12 +138,16 @@ function queueRow(entry) {
       }, 'Buang')));
 }
 
-function galleryTile(item) {
+function galleryTile(item, index, items) {
   return h('button', {
     class: 'tile',
     type: 'button',
     'aria-label': displayTitle(item),
-    onclick: () => openItem(item.id)
+    onclick: () => openGallery(items.map((other) => ({
+      id: other.id,
+      title: displayTitle(other),
+      when: formatDate(other.createdAt)
+    })), index, { onDetails: openItem })
   }, imageHolder(item.id, '', displayTitle(item)),
   item.title && !/\.[a-z0-9]{2,5}$/i.test(item.title) ? h('span', { class: 'tile-title' }, displayTitle(item)) : null,
   h('span', { class: 'tile-when' }, formatDate(item.createdAt)));
@@ -311,7 +315,7 @@ export function renderLibrary(key) {
       : emptyState('Sambungkan ke Google dahulu', 'Masukkan URL Web App dan kunci rahsia supaya data anda boleh disimpan.',
         h('a', { class: 'button primary', href: '#settings' }, 'Buka Tetapan')));
   } else if (view.layout === 'gallery') {
-    children.push(h('div', { class: 'gallery' }, items.map(galleryTile)));
+    children.push(h('div', { class: 'gallery' }, items.map((item, index) => galleryTile(item, index, items))));
   } else if (view.layout === 'notes') {
     children.push(h('div', { class: 'notes' }, items.map(noteCard)));
   } else if (view.layout === 'hidden') {
@@ -349,7 +353,7 @@ export function openItem(id) {
     h('option', { value: 'info', selected: item.ruang === 'info' }, 'Info Penting'));
   const isNew = item.status !== 'dilihat';
   const video = item.type === 'link' ? parseVideo(item.url) : null;
-  let saved = false;
+  let handled = false;
   let dialog;
 
   const body = [];
@@ -390,38 +394,36 @@ export function openItem(id) {
   body.push(field('Tajuk', titleInput), editor.element, field('Simpan di', place));
   if (item.type !== 'image') body.push(h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Gambar'), attachments.element));
 
+  // Perubahan disimpan sendiri bila panel ditutup dengan apa cara sekalipun, bukan hanya dengan butang Simpan.
+  const current = () => ({ title: titleInput.value.trim(), text: editor.value(), ruang: place.value, gambar: attachments.value() });
+  let baseline = JSON.stringify(current());
+  function persist() {
+    if (handled) return;
+    attachments.commit();
+    const next = current();
+    if (JSON.stringify(next) === baseline) return;
+    baseline = JSON.stringify(next);
+    patchItem(item.id, next);
+  }
+
   dialog = openSheet({
     title: displayTitle(item),
     kicker: (TYPE_LABEL[item.type] || 'Item') + ' · ' + formatDate(item.createdAt),
     body,
-    onClose: () => { if (!saved) attachments.discard(); },
+    autosave: persist,
     actions: [
       ...manageButtons({
         table: 'Item',
         id: item.id,
         read: () => ({ title: titleInput.value.trim(), text: editor.value(), gambar: attachments.value() }),
         done: () => {
-          saved = true;
+          handled = true;
           attachments.commit();
           dialog.close();
         }
       }),
       h('span', { class: 'foot-spacer' }),
-      h('button', {
-        class: 'button primary',
-        type: 'button',
-        onclick: () => {
-          saved = true;
-          attachments.commit();
-          patchItem(item.id, {
-            title: titleInput.value.trim(),
-            text: editor.value(),
-            ruang: place.value,
-            gambar: attachments.value()
-          });
-          dialog.close();
-        }
-      }, 'Simpan')
+      h('button', { class: 'button primary', type: 'button', onclick: () => dialog.close() }, 'Simpan')
     ]
   });
 }

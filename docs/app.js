@@ -1,5 +1,5 @@
 import { isConfigured, loadLocalData, processQueue, recordsIn, refresh, render, setItemTitle, setRenderer, state } from './lib/data.js';
-import { askText, h, icon, toast } from './lib/dom.js';
+import { askText, h, icon, saveOpenSheets, toast } from './lib/dom.js';
 import { openComposer } from './views/compose.js';
 import { LIBRARY_VIEWS, hideAllInfo } from './views/library.js';
 import { renderSearch } from './views/search.js';
@@ -391,6 +391,7 @@ async function start() {
   document.addEventListener('visibilitychange', () => {
     // Isi Info Penting disorok semula sebaik app ditinggalkan.
     if (document.visibilityState === 'hidden') {
+      saveOpenSheets();
       hideAllInfo();
       render();
     }

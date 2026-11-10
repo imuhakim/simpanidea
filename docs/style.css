@@ -961,6 +961,37 @@ dialog::backdrop { background: var(--overlay); backdrop-filter: blur(3px); anima
 .lightbox-close { position: fixed; top: 12px; right: 12px; color: #fff; }
 .lightbox-close:hover { background: rgb(255 255 255 / 16%); color: #fff; }
 
+/* Paparan gambar yang boleh dileret */
+.viewer { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; padding: 0; border: 0; background: transparent; color: #fff; }
+.viewer[open] { display: flex; flex-direction: column; animation: fade .18s ease; }
+.viewer::backdrop { background: rgb(10 11 18 / 94%); }
+.viewer-track {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.viewer-track::-webkit-scrollbar { display: none; }
+.viewer-slide { display: grid; flex: 0 0 100%; place-items: center; min-width: 0; padding: 60px 12px 8px; scroll-snap-align: center; scroll-snap-stop: always; }
+.viewer .viewer-image { width: 100%; height: 100%; background: transparent; color: rgb(255 255 255 / 50%); }
+.viewer .viewer-image img { object-fit: contain; object-position: center; }
+.viewer-close { position: fixed; top: 12px; right: 12px; color: #fff; }
+.viewer-close:hover, .viewer-nav:hover { background: rgb(255 255 255 / 16%); color: #fff; }
+.viewer-nav { position: fixed; top: 50%; color: #fff; background: rgb(255 255 255 / 10%); transform: translateY(-50%); }
+.viewer-nav:disabled { opacity: .25; }
+.viewer-prev { left: 12px; }
+.viewer-prev .icon { transform: rotate(180deg); }
+.viewer-next { right: 12px; }
+@media (hover: none) { .viewer-nav { display: none; } }
+.viewer-bar { display: flex; align-items: center; gap: 12px; padding: 10px 16px calc(14px + env(safe-area-inset-bottom)); }
+.viewer-caption { flex: 1; min-width: 0; }
+.viewer-title { overflow: hidden; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.viewer-sub { color: rgb(255 255 255 / 65%); font-size: 13px; }
+
 /* Kunci PIN */
 .lock { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; background: var(--page); }
 .lock[open] { display: flex; align-items: center; justify-content: center; }

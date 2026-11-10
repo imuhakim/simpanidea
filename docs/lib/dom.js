@@ -54,7 +54,7 @@ export function toast(message, isError = false, action = null) {
   toastTimer = setTimeout(() => { element.hidden = true; }, isError || action ? 6000 : 3000);
 }
 
-function showDialog(className, children, labelledBy, onClose) {
+export function showDialog(className, children, labelledBy, onClose) {
   const dialog = h('dialog', { class: className, 'aria-labelledby': labelledBy }, children);
   dialog.addEventListener('click', (event) => {
     if (event.target === dialog) dialog.close();
@@ -70,10 +70,28 @@ function showDialog(className, children, labelledBy, onClose) {
 }
 
 let sheetCount = 0;
-/** Panel sisi untuk melihat dan mengubah satu rekod. */
-export function openSheet({ title, kicker, body, actions, onClose }) {
+const autosavers = new Set();
+
+/** Simpan semua panel yang masih terbuka, contohnya bila app ditinggalkan. Panel kekal terbuka. */
+export function saveOpenSheets() {
+  autosavers.forEach((save) => save());
+}
+
+/**
+ * Panel sisi untuk melihat dan mengubah satu rekod.
+ * autosave dipanggil setiap kali panel ditutup, walaupun dengan menekan di luar panel.
+ */
+export function openSheet({ title, kicker, body, actions, onClose, autosave }) {
   const titleId = 'sheet-title-' + (++sheetCount);
   let dialog;
+  if (autosave) autosavers.add(autosave);
+  const closed = () => {
+    if (autosave) {
+      autosavers.delete(autosave);
+      autosave();
+    }
+    if (onClose) onClose();
+  };
   dialog = showDialog('sheet', [
     h('header', { class: 'sheet-head' },
       h('div', { class: 'sheet-heading' },
@@ -84,7 +102,7 @@ export function openSheet({ title, kicker, body, actions, onClose }) {
       }, icon('close'))),
     h('div', { class: 'sheet-body' }, body),
     actions && actions.length ? h('footer', { class: 'sheet-foot' }, actions) : null
-  ], titleId, onClose);
+  ], titleId, closed);
   return dialog;
 }
 

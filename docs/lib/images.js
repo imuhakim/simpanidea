@@ -1,7 +1,7 @@
 // Memuat gambar dan menguruskan lampiran. Gambar disimpan dalam peranti selepas dimuat,
 // jadi Drive hanya dipanggil sekali untuk setiap gambar.
 import { callBackend, deleteRecord, idList, imageItem, addItems } from './data.js';
-import { h, icon, showLightbox, toast } from './dom.js';
+import { h, icon, showDialog, showLightbox, toast } from './dom.js';
 
 const CONCURRENCY = 3;
 const urls = new Map();
@@ -91,6 +91,66 @@ export async function openImage(id, alt) {
   } catch {
     toast('Gambar tidak dapat dimuat', true);
   }
+}
+
+/**
+ * Gambar skrin penuh yang boleh dileret ke kiri dan kanan.
+ * slides: [{ id, title, when }]. onDetails(id) membuka butiran gambar yang sedang dilihat.
+ */
+export function openGallery(slides, start = 0, { onDetails } = {}) {
+  let index = start;
+  let dialog;
+  const track = h('div', { class: 'viewer-track' }, slides.map((slide) => h('div', { class: 'viewer-slide' },
+    imageHolder(slide.id, 'viewer-image', slide.title))));
+  const title = h('p', { class: 'viewer-title' });
+  const sub = h('p', { class: 'viewer-sub' });
+  const go = (next) => {
+    const target = Math.max(0, Math.min(slides.length - 1, next));
+    track.scrollTo({ left: target * track.clientWidth, behavior: 'smooth' });
+  };
+  const prev = h('button', { class: 'icon-button viewer-nav viewer-prev', type: 'button', 'aria-label': 'Gambar sebelum', onclick: () => go(index - 1) }, icon('move'));
+  const next = h('button', { class: 'icon-button viewer-nav viewer-next', type: 'button', 'aria-label': 'Gambar seterusnya', onclick: () => go(index + 1) }, icon('move'));
+
+  function show() {
+    const slide = slides[index];
+    title.textContent = slide.title;
+    sub.textContent = (index + 1) + ' / ' + slides.length + (slide.when ? ' · ' + slide.when : '');
+    prev.disabled = index === 0;
+    next.disabled = index === slides.length - 1;
+    // Gambar bersebelahan dimuat awal supaya leretan tidak menunggu.
+    [index - 1, index + 1].forEach((near) => { if (slides[near]) imageUrlFor(slides[near].id).catch(() => {}); });
+  }
+
+  track.addEventListener('scroll', () => {
+    const now = Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
+    if (now !== index && slides[now]) {
+      index = now;
+      show();
+    }
+  }, { passive: true });
+
+  dialog = showDialog('viewer', [
+    track,
+    h('button', { class: 'icon-button viewer-close', type: 'button', 'aria-label': 'Tutup', onclick: () => dialog.close() }, icon('close')),
+    slides.length > 1 && [prev, next],
+    h('div', { class: 'viewer-bar' },
+      h('div', { class: 'viewer-caption' }, title, sub),
+      onDetails && h('button', {
+        class: 'button',
+        type: 'button',
+        onclick: () => {
+          const { id } = slides[index];
+          dialog.close();
+          onDetails(id);
+        }
+      }, 'Butiran'))
+  ]);
+  dialog.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowRight') go(index + 1);
+    if (event.key === 'ArrowLeft') go(index - 1);
+  });
+  track.scrollLeft = start * track.clientWidth;
+  show();
 }
 
 /** Butang kamera dan galeri yang dikongsi semua borang. */
