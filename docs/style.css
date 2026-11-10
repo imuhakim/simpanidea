@@ -922,6 +922,7 @@ dialog::backdrop { background: var(--overlay); backdrop-filter: blur(3px); anima
 .sheet[open] { display: flex; flex-direction: column; animation: slide-in .26s var(--ease); }
 .sheet-head { display: flex; align-items: flex-start; gap: 8px; padding: 18px 14px 12px 22px; border-bottom: 1px solid var(--line); }
 .sheet-heading { flex: 1; min-width: 0; }
+.sheet-head-actions { display: flex; flex: none; align-items: center; gap: 6px; }
 .sheet-heading h2 { font-size: 18px; line-height: 1.25; font-weight: 750; letter-spacing: -.025em; overflow-wrap: anywhere; }
 .sheet-kicker { margin-bottom: 2px; color: var(--tone-fg); font-size: 12.5px; font-weight: 680; }
 .sheet-body { flex: 1; padding: 18px 22px; overflow-y: auto; }

@@ -81,7 +81,7 @@ export function saveOpenSheets() {
  * Panel sisi untuk melihat dan mengubah satu rekod.
  * autosave dipanggil setiap kali panel ditutup, walaupun dengan menekan di luar panel.
  */
-export function openSheet({ title, kicker, body, actions, onClose, autosave }) {
+export function openSheet({ title, kicker, body, actions, onClose, autosave, closeButton = true }) {
   const titleId = 'sheet-title-' + (++sheetCount);
   let dialog;
   if (autosave) autosavers.add(autosave);
@@ -92,16 +92,24 @@ export function openSheet({ title, kicker, body, actions, onClose, autosave }) {
     }
     if (onClose) onClose();
   };
+  // Butang utama (Simpan) dan yang bertanda data-head diletakkan di atas,
+  // supaya tidak terlindung oleh papan kekunci phone.
+  const all = (actions || []).filter(Boolean);
+  const onTop = (element) => element.classList.contains('primary') || element.hasAttribute('data-head');
+  const headActions = all.filter(onTop);
+  const footActions = all.filter((element) => !onTop(element));
+  const hasFoot = footActions.some((element) => !element.classList.contains('foot-spacer'));
   dialog = showDialog('sheet', [
     h('header', { class: 'sheet-head' },
       h('div', { class: 'sheet-heading' },
         kicker && h('p', { class: 'sheet-kicker' }, kicker),
         h('h2', { id: titleId }, title)),
-      h('button', {
+      headActions.length > 0 && h('div', { class: 'sheet-head-actions' }, headActions),
+      closeButton && h('button', {
         class: 'icon-button', type: 'button', 'aria-label': 'Tutup', onclick: () => dialog.close()
       }, icon('close'))),
     h('div', { class: 'sheet-body' }, body),
-    actions && actions.length ? h('footer', { class: 'sheet-foot' }, actions) : null
+    hasFoot ? h('footer', { class: 'sheet-foot' }, footActions) : null
   ], titleId, closed);
   return dialog;
 }

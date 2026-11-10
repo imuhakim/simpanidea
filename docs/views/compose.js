@@ -130,6 +130,7 @@ export function openComposer({ text = '', ruang = '', kind = '', mode = '', file
       h('button', {
         class: 'button plain',
         type: 'button',
+        'data-head': true,
         onclick: () => {
           cancelled = true;
           dialog.close();
@@ -139,6 +140,8 @@ export function openComposer({ text = '', ruang = '', kind = '', mode = '', file
     ],
     // Hanya Batal yang membuang. Menekan di luar panel atau keluar dari app tetap menyimpan.
     autosave: () => save(true),
+    // Batal dan Simpan sudah ada di atas; menekan di luar panel tetap menyimpan.
+    closeButton: false,
     onClose: () => {
       // Gambar mesti dibaca dahulu sebelum pautan pratonton dilepaskan.
       setTimeout(() => previewUrls.forEach((url) => URL.revokeObjectURL(url)), 0);
