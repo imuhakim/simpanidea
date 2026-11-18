@@ -53,6 +53,11 @@ function fakeChat(payload) {
     return 'Ini checklist anda:\n' + last.split('\n').filter((line) => /^\[[ x]\] /.test(line))
       .sort((a, b) => a.slice(4).localeCompare(b.slice(4))).join('\n');
   }
+  // Cari dengan AI: pulangkan dua rekod pertama, ditambah rujukan palsu yang mesti diabaikan oleh app.
+  if (last.startsWith('Cari dalam <data_simpanidea>')) {
+    const refs = [...String(payload.system).matchAll(/^(\d+) \| /gm)].slice(0, 2).map((match) => match[1]);
+    return refs.map((ref) => ref + ' | Berkaitan dengan maksud carian anda').concat('9999 | rujukan palsu').join('\n');
+  }
   return 'Ini **jawapan tiruan**.\n\n- Perkara satu\n- Perkara `dua`\n\n<img src=x onerror=alert(1)>';
 }
 harness.state.anthropic = (url, options) => ({

@@ -78,7 +78,7 @@ function queuedThumb(entry) {
   return h('span', { class: 'thumb' }, icon(TYPE_ICON[entry.type] || 'note'));
 }
 
-function itemThumb(item) {
+export function itemThumb(item) {
   if (item.type === 'image') return imageHolder(item.id, 'thumb');
   const [firstImage] = idList(item.gambar);
   if (firstImage) return imageHolder(firstImage, 'thumb');

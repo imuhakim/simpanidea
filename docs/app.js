@@ -2,7 +2,7 @@ import { isConfigured, loadLocalData, processQueue, recordsIn, refresh, render, 
 import { askText, h, icon, saveOpenSheets, toast } from './lib/dom.js';
 import { openComposer } from './views/compose.js';
 import { LIBRARY_VIEWS, hideAllInfo } from './views/library.js';
-import { renderSearch } from './views/search.js';
+import { rememberSearch, renderSearch } from './views/search.js';
 import { renderTasks } from './views/tasks.js';
 import { renderBoard } from './views/board.js';
 import { renderClasses } from './views/classes.js';
@@ -104,9 +104,12 @@ function viewSummary(key) {
 
 let shownIcon = '';
 
+// Halaman Carian juga dibuka bila kotak carian ditekan, untuk menunjukkan carian terakhir.
+const isSearching = () => Boolean(state.query.trim()) || Boolean(state.searchPanel);
+
 function renderChrome() {
   renderNav();
-  const searching = Boolean(state.query.trim());
+  const searching = isSearching();
   const tone = searching ? 'all' : state.view;
   const iconName = searching ? 'search' : VIEWS[state.view].icon;
   document.body.dataset.tone = tone;
@@ -140,7 +143,7 @@ function isTyping() {
 
 function drawMain() {
   const main = $('main');
-  const searching = Boolean(state.query.trim());
+  const searching = isSearching();
   const view = searching ? renderSearch : VIEWS[state.view].render;
   main.classList.toggle('board-main', !searching && state.view === 'board');
 
@@ -173,7 +176,7 @@ function renderMain() {
     renderDeferred = true;
     return;
   }
-  const searching = Boolean(state.query.trim());
+  const searching = isSearching();
   // Tonton dan Tetapan mengemas kini sebahagian sahaja supaya video dan borang tidak hilang.
   if (!searching && state.view === 'watch' && $('main').querySelector('.watch')) {
     updateWatch();
@@ -362,12 +365,37 @@ async function start() {
     await processQueue();
     await refresh();
   });
-  $('search').addEventListener('input', (event) => {
-    state.query = event.target.value;
+  function redrawSearch() {
     renderChrome();
     $('main').classList.remove('board-main');
     $('main').replaceChildren();
     drawMain();
+  }
+  $('search').addEventListener('input', (event) => {
+    state.query = event.target.value;
+    redrawSearch();
+  });
+  $('search').addEventListener('focus', () => {
+    if (state.query.trim() || state.searchPanel) return;
+    state.searchPanel = true;
+    redrawSearch();
+  });
+  $('search').addEventListener('blur', () => {
+    // Tunggu sebentar supaya butang yang ditekan sempat menerima tekanan.
+    setTimeout(() => {
+      if (!state.searchPanel || document.activeElement === $('search')) return;
+      state.searchPanel = false;
+      if (!state.query.trim()) redrawSearch();
+    }, 150);
+  });
+  $('search').addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' || event.isComposing) return;
+    rememberSearch(state.query);
+    // Tutup papan kekunci phone supaya hasil carian kelihatan.
+    $('search').blur();
+  });
+  window.addEventListener('simpanidea:redraw', () => {
+    if (isSearching()) redrawSearch();
   });
   // Lukisan yang ditangguhkan semasa menaip dibuat sebaik fokus keluar dari medan.
   $('main').addEventListener('focusout', () => {

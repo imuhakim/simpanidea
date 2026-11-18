@@ -279,3 +279,33 @@ test('checklist dibaca daripada jawapan AI walaupun ada ayat lain', () => {
   assert.deepEqual(rows, [{ text: 'Tonton Dune', done: false }, { text: 'Daftar SSM', done: true }]);
   assert.deepEqual(rowsFromAiText('Maaf, saya tidak faham.'), []);
 });
+
+test('carian pintar: susunan bebas, separuh perkataan, imbuhan dan salah eja', async () => {
+  const { scoreRecord, roots } = await import('../docs/lib/search.js');
+  const note = [{ text: 'Bisnes jual kopi', weight: 3 }, { text: 'Cari pembekal biji kopi di Kedah' }];
+  assert.ok(scoreRecord('kopi bisnes', note));
+  assert.ok(scoreRecord('bisn', note));
+  assert.ok(scoreRecord('bisnis', note));
+  assert.ok(scoreRecord('bekal', note));
+  assert.equal(scoreRecord('kopi teh', note), null);
+  assert.ok(roots('menyimpan').includes('simpan'));
+  assert.ok(roots('pembelian').includes('beli'));
+  assert.ok(roots('menulis').includes('tulis'));
+  assert.ok(scoreRecord('simpan', [{ text: 'Cara menyimpan data' }]));
+  assert.ok(scoreRecord('oppenhimer', [{ text: 'Tonton Oppenheimer' }]));
+  // Tajuk dan frasa penuh lebih tinggi daripada padanan dalam isi.
+  const inTitle = scoreRecord('jual kopi', note).score;
+  const inBody = scoreRecord('jual kopi', [{ text: 'x', weight: 3 }, { text: 'kopi untuk jual' }]).score;
+  assert.ok(inTitle > inBody);
+});
+
+test('serlahan dan petikan ikut perkataan yang sepadan', async () => {
+  const { markSegments, scoreRecord, snippet } = await import('../docs/lib/search.js');
+  const { hits } = scoreRecord('kopi', [{ text: 'Bisnes jual Kopi.' }]);
+  assert.deepEqual(markSegments('Bisnes jual Kopi.', hits), [
+    { text: 'Bisnes jual ', hit: false }, { text: 'Kopi', hit: true }, { text: '.', hit: false }
+  ]);
+  const long = 'a '.repeat(100) + 'kopi ' + 'b '.repeat(100);
+  const cut = snippet(long, hits);
+  assert.ok(cut.includes('kopi') && cut.startsWith('…') && cut.endsWith('…'));
+});

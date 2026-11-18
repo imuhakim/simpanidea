@@ -18,6 +18,7 @@ let purgedThisSession = false;
 export const state = {
   view: 'inbox',
   query: '',
+  searchPanel: false,
   // raw ialah salinan penuh Sheet. tables dan items hanya mengandungi rekod aktif,
   // jadi rekod dalam arkib dan sampah tidak muncul di halaman biasa.
   raw: EMPTY_TABLES(),

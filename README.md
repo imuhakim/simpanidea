@@ -12,6 +12,7 @@ App peribadi untuk simpan screenshot, link, nota, tugasan, kad kanban, kelas onl
 | **Tonton** | Video YouTube, TikTok dan Facebook dimainkan terus dalam app |
 | **Resit** | Ambil gambar resit, dan AI isikan peniaga, tarikh, jumlah dan barangan |
 | **Tanya AI** | Tanya apa saja, atau minta AI huraikan screenshot dan rekod anda |
+| **Carian** | Cari semua yang pernah ditulis. Susunan perkataan, salah eja kecil dan imbuhan seperti "menyimpan" tidak menjadi masalah, dan hasil disusun ikut paling sepadan. Butang Cari dengan AI mencari ikut maksud |
 | **Arkib** | Rekod yang keluar dari senarai harian, tapi kekal untuk dirujuk |
 | **Sampah** | Rekod yang dipadam, boleh dipulihkan dalam 30 hari |
 
