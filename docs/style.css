@@ -1409,3 +1409,22 @@ dialog::backdrop { background: var(--overlay); backdrop-filter: blur(3px); anima
   .receipt-image { position: static; }
   .receipt-image .sheet-image img { max-height: 46dvh; object-fit: contain; }
 }
+
+/* Kategori screenshot dan alat checklist */
+.category-chips { margin-bottom: 12px; }
+.category-picks { margin: -6px 0 14px; }
+.pick-list { display: grid; gap: 4px; margin: 12px 0; }
+.pick-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--raised);
+  cursor: pointer;
+}
+.pick-row:has(.check-box:checked) { border-color: var(--tone-fg); }
+.pick-row .row-title { display: block; font-weight: 600; }
+.pick-row .row-sub { white-space: normal; }
+.field-hint.failed { color: var(--bad); }

@@ -3,6 +3,7 @@ import { addItems, imageItem, itemFromText, newItem } from '../lib/data.js';
 import { field, h, icon, openSheet, toast } from '../lib/dom.js';
 import { photoButtons } from '../lib/images.js';
 import { noteEditor } from './checklist.js';
+import { NO_CATEGORY, categoryFilter, categoryPicker } from './category.js';
 
 const KINDS = {
   '': { sheet: 'Tambah', label: 'Link atau nota', placeholder: 'Tampal link, atau tulis idea anda' },
@@ -37,6 +38,10 @@ export function openComposer({ text = '', ruang = '', kind = '', mode = '', file
       else editor.focus();
     }
   });
+  // Screenshot baru masuk ke kategori yang sedang dibuka di halaman Screenshot.
+  const category = kind === 'image'
+    ? categoryPicker(categoryFilter.value === NO_CATEGORY ? '' : categoryFilter.value)
+    : null;
   const infoHint = h('span', { class: 'field-hint', hidden: ruang !== 'info' }, 'Hanya tajuk ini yang kelihatan di Info Penting.');
   const place = h('select', {
     class: 'input',
@@ -97,7 +102,8 @@ export function openComposer({ text = '', ruang = '', kind = '', mode = '', file
       ? {
         ruang: chosenPlace,
         ...(title || chosenPlace === 'info' ? { title } : {}),
-        ...(value ? { text: value } : {})
+        ...(value ? { text: value } : {}),
+        ...(category && category.value() ? { kategori: category.value() } : {})
       }
       : { ruang: 'lampiran', title: '' };
     try {
@@ -122,9 +128,10 @@ export function openComposer({ text = '', ruang = '', kind = '', mode = '', file
     title: words.sheet,
     body: [
       field('Tajuk (pilihan)', titleInput, infoHint),
+      category && category.element,
       kind === 'image' ? [photos, editor.element] : [editor.element, photos],
       field('Simpan ke', place)
-    ].flat(),
+    ].flat().filter(Boolean),
     actions: [
       h('span', { class: 'foot-spacer' }),
       h('button', {

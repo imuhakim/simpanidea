@@ -13,10 +13,16 @@ const POSITION_STEP = 1024;
 
 const position = (record) => Number(record.kedudukan) || 0;
 const byPosition = (a, b) => position(a) - position(b);
-const sortedColumns = () => [...state.tables.Lajur].sort(byPosition);
+export const sortedColumns = () => [...state.tables.Lajur].sort(byPosition);
 const cardsIn = (columnId) => state.tables.Kad.filter((card) => card.lajur_id === columnId).sort(byPosition);
 
-function positionBetween(before, after) {
+/** Kedudukan kad terakhir dalam lajur, atau null kalau lajur kosong. */
+export function lastPosition(columnId) {
+  const last = cardsIn(columnId).at(-1);
+  return last ? position(last) : null;
+}
+
+export function positionBetween(before, after) {
   if (before != null && after != null) return (before + after) / 2;
   if (before != null) return before + POSITION_STEP;
   if (after != null) return after - POSITION_STEP;

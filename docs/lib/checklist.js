@@ -46,3 +46,36 @@ export function readableNote(text) {
   if (!rows) return String(text || '');
   return rows.map((row) => (row.done ? '☑ ' : '☐ ') + row.text).join('\n');
 }
+
+const sameText = (text) => cleanLine(text).replace(/\s+/g, ' ').toLowerCase();
+
+/** Satukan beberapa checklist. Perkara yang sama dikira sekali, dan kekal belum siap kalau ada yang belum siap. */
+export function mergeRows(lists) {
+  const seen = new Map();
+  const merged = [];
+  for (const rows of lists) {
+    for (const row of rows || []) {
+      const text = cleanLine(row.text);
+      if (!text) continue;
+      const found = seen.get(sameText(text));
+      if (found) {
+        found.done = found.done && Boolean(row.done);
+        continue;
+      }
+      const copy = { text, done: Boolean(row.done) };
+      seen.set(sameText(text), copy);
+      merged.push(copy);
+    }
+  }
+  return merged;
+}
+
+/** Baca checklist daripada jawapan AI, yang mungkin dimulakan dengan "-" atau dibungkus ayat lain. */
+export function rowsFromAiText(text) {
+  const rows = [];
+  for (const line of String(text || '').split('\n')) {
+    const match = line.trim().match(/^(?:[-*•]\s*)?\[([ xX])\]\s+(\S.*)$/);
+    if (match) rows.push({ text: cleanLine(match[2]), done: match[1] !== ' ' });
+  }
+  return rows;
+}

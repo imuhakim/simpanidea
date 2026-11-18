@@ -46,6 +46,15 @@ const FAKE_EXPENSES = {
   ]
 };
 const fakeStructured = (data) => ({ stop_reason: 'end_turn', model: 'claude-opus-5-5', usage: { input_tokens: 900, output_tokens: 120 }, content: [{ type: 'text', text: JSON.stringify(data) }] });
+// Permintaan susun checklist dijawab dengan perkara yang sama, disusun ikut abjad.
+function fakeChat(payload) {
+  const last = payload.messages.at(-1).content.find((block) => block.type === 'text').text;
+  if (last.startsWith('Susun checklist')) {
+    return 'Ini checklist anda:\n' + last.split('\n').filter((line) => /^\[[ x]\] /.test(line))
+      .sort((a, b) => a.slice(4).localeCompare(b.slice(4))).join('\n');
+  }
+  return 'Ini **jawapan tiruan**.\n\n- Perkara satu\n- Perkara `dua`\n\n<img src=x onerror=alert(1)>';
+}
 harness.state.anthropic = (url, options) => ({
   code: 200,
   body: url.endsWith('/messages') && JSON.parse(options.payload).output_config.format
@@ -55,7 +64,7 @@ harness.state.anthropic = (url, options) => ({
       stop_reason: 'end_turn',
       model: 'claude-opus-5-5',
       usage: { input_tokens: 1200, output_tokens: 80 },
-      content: [{ type: 'text', text: 'Ini **jawapan tiruan**.\n\n- Perkara satu\n- Perkara `dua`\n\n<img src=x onerror=alert(1)>' }]
+      content: [{ type: 'text', text: fakeChat(JSON.parse(options.payload)) }]
     }
     : { data: [] }
 });

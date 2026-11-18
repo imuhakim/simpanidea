@@ -9,8 +9,8 @@ const KEEP_AS_IS = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const EMPTY_TABLES = () => ({ Item: [], Tugasan: [], Kad: [], Lajur: [], Kelas: [], Tetapan: [], Resit: [], Bayaran: [], Perbualan: [], MesejAI: [] });
 const DATED_TABLES = new Set(['Tugasan', 'Kad', 'Kelas', 'Resit', 'Perbualan', 'MesejAI']);
 // Item ditulis dengan nama lajur Sheet, tapi dibaca dalam app dengan nama yang lebih mudah.
-const ITEM_FIELD_TO_COLUMN = { title: 'tajuk', text: 'nota', status: 'status', ruang: 'ruang', gambar: 'gambar' };
-const REQUIRED_BACKEND_VERSION = 6;
+const ITEM_FIELD_TO_COLUMN = { title: 'tajuk', text: 'nota', status: 'status', ruang: 'ruang', gambar: 'gambar', kategori: 'kategori' };
+const REQUIRED_BACKEND_VERSION = 7;
 const TRASH_DAYS = 30;
 export const TRASH_LIFETIME_DAYS = TRASH_DAYS;
 let purgedThisSession = false;
@@ -95,6 +95,7 @@ export function itemFromRow(row) {
     status: row.status,
     ruang: row.ruang || '',
     gambar: row.gambar || '',
+    kategori: row.kategori || '',
     keadaan: row.keadaan || '',
     dibuangPada: row.dibuang_pada || ''
   };
@@ -358,7 +359,7 @@ export async function addItems(items) {
 async function itemPayload(entry) {
   const payload = {
     id: entry.id, type: entry.type, title: entry.title, url: entry.url,
-    text: entry.text, ruang: entry.ruang || '', gambar: entry.gambar || '', createdAt: entry.createdAt
+    text: entry.text, ruang: entry.ruang || '', gambar: entry.gambar || '', kategori: entry.kategori || '', createdAt: entry.createdAt
   };
   let image = null;
   if (entry.type === 'image') {

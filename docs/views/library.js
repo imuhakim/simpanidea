@@ -7,6 +7,8 @@ import { parseVideo } from '../lib/video.js';
 import { archiveWithUndo, manageButtons } from './manage.js';
 import { askAiButton } from './ai.js';
 import { noteEditor } from './checklist.js';
+import { openChecklistToBoard, openMergeChecklists } from './checklist-tools.js';
+import { NO_CATEGORY, categoriesOf, categoryFilter, categoryPicker, inCategory } from './category.js';
 import { openComposer } from './compose.js';
 
 // Info Penting berasingan dan tersorok, jadi isinya tidak muncul di senarai lain.
@@ -280,6 +282,30 @@ function infoRow(item) {
     open && infoContent(item));
 }
 
+/** Butang kategori di halaman Screenshot. Tiada apa-apa ditunjuk sehingga kategori pertama dicipta. */
+function categoryChips(items) {
+  const names = categoriesOf(items);
+  const chosen = categoryFilter.value;
+  if (chosen && chosen !== NO_CATEGORY && !names.includes(chosen)) categoryFilter.value = '';
+  if (!names.length) {
+    return items.length > 0 && h('p', { class: 'page-note' }, 'Susun screenshot ikut kategori, contohnya Movie atau Bisnes: buka gambar, tekan Butiran dan isi Kategori.');
+  }
+  const uncategorised = items.filter((item) => inCategory(item, NO_CATEGORY)).length;
+  const chip = (value, label, count) => h('button', {
+    class: 'tab-inline',
+    type: 'button',
+    'aria-pressed': String(categoryFilter.value === value),
+    onclick: () => {
+      categoryFilter.value = value;
+      render();
+    }
+  }, label, h('span', { class: 'count' }, String(count)));
+  return h('div', { class: 'tabs-inline category-chips', role: 'group', 'aria-label': 'Kategori' },
+    chip('', 'Semua', items.length),
+    names.map((name) => chip(name, name, items.filter((item) => inCategory(item, name)).length)),
+    uncategorised > 0 && chip(NO_CATEGORY, 'Tiada kategori', uncategorised));
+}
+
 function pendingEntries(filter) {
   return state.queue.filter((entry) => !entry.kind && filter(entry));
 }
@@ -287,8 +313,14 @@ function pendingEntries(filter) {
 export function renderLibrary(key) {
   const view = LIBRARY_VIEWS[key];
   const queued = pendingEntries(view.filter);
-  const items = state.items.filter(view.filter).sort(newestFirst);
+  let items = state.items.filter(view.filter).sort(newestFirst);
   const children = [];
+
+  if (key === 'image') {
+    const chips = categoryChips(items);
+    if (chips) children.push(chips);
+    items = items.filter((item) => inCategory(item, categoryFilter.value));
+  }
 
   if (key === 'inbox' && isConfigured()) children.push(overviewStats());
 
@@ -347,6 +379,8 @@ export function openItem(id) {
 
   const titleInput = h('input', { class: 'input', type: 'text', value: item.title, placeholder: 'Tiada tajuk' });
   const editor = noteEditor({ text: item.text, showModes: item.type === 'note' });
+  const category = item.type === 'image' ? categoryPicker(item.kategori) : null;
+  const isChecklist = item.type === 'note' && Boolean(parseChecklist(item.text));
   const attachments = attachmentEditor(item.gambar);
   const place = h('select', { class: 'input' },
     h('option', { value: '', selected: item.ruang === '' }, 'Inbox'),
@@ -388,14 +422,22 @@ export function openItem(id) {
         patchItem(item.id, { status: isNew ? 'dilihat' : 'baru' });
         dialog.close();
       }
-    }, icon(isNew ? 'check' : 'undo'), isNew ? 'Tanda sudah dilihat' : 'Pulangkan ke Inbox')
+    }, icon(isNew ? 'check' : 'undo'), isNew ? 'Tanda sudah dilihat' : 'Pulangkan ke Inbox'),
+    isChecklist && h('button', { class: 'button', type: 'button', onclick: () => handOver(openMergeChecklists) }, icon('note'), 'Gabung checklist'),
+    isChecklist && h('button', { class: 'button', type: 'button', onclick: () => handOver(openChecklistToBoard) }, icon('board'), 'Pindah ke Kanban')
   ];
   body.push(h('div', { class: 'sheet-actions' }, quickActions));
-  body.push(field('Tajuk', titleInput), editor.element, field('Simpan di', place));
+  body.push(field('Tajuk', titleInput), category && category.element, editor.element, field('Simpan di', place));
   if (item.type !== 'image') body.push(h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Gambar'), attachments.element));
 
   // Perubahan disimpan sendiri bila panel ditutup dengan apa cara sekalipun, bukan hanya dengan butang Simpan.
-  const current = () => ({ title: titleInput.value.trim(), text: editor.value(), ruang: place.value, gambar: attachments.value() });
+  const current = () => ({
+    title: titleInput.value.trim(),
+    text: editor.value(),
+    ruang: place.value,
+    gambar: attachments.value(),
+    ...(category ? { kategori: category.value() } : {})
+  });
   let baseline = JSON.stringify(current());
   function persist() {
     if (handled) return;
@@ -404,6 +446,19 @@ export function openItem(id) {
     if (JSON.stringify(next) === baseline) return;
     baseline = JSON.stringify(next);
     patchItem(item.id, next);
+  }
+
+  // Simpan dahulu, kemudian tutup panel ini dan buka tetingkap seterusnya dengan isi terkini.
+  function handOver(open) {
+    const text = editor.value();
+    if (!parseChecklist(text)) {
+      toast('Tukar kembali ke Checklist dahulu.', true);
+      return;
+    }
+    persist();
+    handled = true;
+    dialog.close();
+    open(item.id, text);
   }
 
   dialog = openSheet({

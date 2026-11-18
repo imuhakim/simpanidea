@@ -4,7 +4,7 @@ App peribadi untuk simpan screenshot, link, nota, tugasan, kad kanban, kelas onl
 
 | Bahagian | Kegunaan |
 |---|---|
-| **Inbox, Semua, Screenshot, Link, Nota** | Semua yang disimpan dari phone dan komputer. Nota boleh jadi teks biasa atau checklist |
+| **Inbox, Semua, Screenshot, Link, Nota** | Semua yang disimpan dari phone dan komputer. Screenshot boleh disusun ikut kategori sendiri (contohnya Movie, Bisnes). Nota boleh jadi teks biasa atau checklist, dan checklist boleh digabung (disusun oleh AI jika mahu) atau dipindah ke Papan |
 | **Info Penting** | Gambar yang anda perlu rujuk semula, seperti resit dan tiket |
 | **Tugasan** | Senarai tugasan dikumpul ikut tarikh |
 | **Papan** | Kanban dengan lajur yang boleh ditambah dan kad yang boleh diseret |

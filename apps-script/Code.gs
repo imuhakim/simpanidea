@@ -12,7 +12,7 @@ var SPREADSHEET_NAME = 'SimpanIdea Data';
 
 // Lajur baru mesti ditambah di hujung supaya data sedia ada tidak teralih.
 var SHEETS = {
-  Item: ['id', 'dicipta', 'jenis', 'tajuk', 'url', 'nota', 'drive_file_id', 'drive_url', 'nama_fail', 'saiz_bait', 'status', 'ruang', 'gambar', 'keadaan', 'dibuang_pada'],
+  Item: ['id', 'dicipta', 'jenis', 'tajuk', 'url', 'nota', 'drive_file_id', 'drive_url', 'nama_fail', 'saiz_bait', 'status', 'ruang', 'gambar', 'keadaan', 'dibuang_pada', 'kategori'],
   Tugasan: ['id', 'dicipta', 'tajuk', 'nota', 'siap', 'tarikh_akhir', 'gambar', 'kemas_kini', 'keadaan', 'dibuang_pada'],
   Kad: ['id', 'dicipta', 'tajuk', 'nota', 'lajur_id', 'kedudukan', 'gambar', 'kemas_kini', 'keadaan', 'dibuang_pada'],
   Lajur: ['id', 'tajuk', 'kedudukan'],
@@ -31,7 +31,7 @@ var DEFAULT_COLUMNS = [
 ];
 
 // Lajur Item yang boleh diubah selepas dicipta. Fail dan pautan Drive tidak boleh ditukar.
-var ITEM_EDITABLE = ['tajuk', 'nota', 'status', 'ruang', 'gambar', 'keadaan', 'dibuang_pada'];
+var ITEM_EDITABLE = ['tajuk', 'nota', 'status', 'ruang', 'gambar', 'keadaan', 'dibuang_pada', 'kategori'];
 var ALLOWED_VALUES = {
   'Item.status': ['baru', 'dilihat'],
   'Item.ruang': ['', 'info', 'lampiran'],
@@ -50,7 +50,7 @@ var ALLOWED_VALUES = {
   'MesejAI.peranan': ['user', 'assistant']
 };
 // App menyemak nombor ini untuk mengesan backend yang belum dikemas kini.
-var BACKEND_VERSION = 6;
+var BACKEND_VERSION = 7;
 
 var ANTHROPIC_URL = 'https://api.anthropic.com/v1';
 var ANTHROPIC_VERSION = '2026-10-21';
@@ -197,6 +197,7 @@ var RESOLVABLE_HOSTS = [
 var MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 var MAX_TITLE_LENGTH = 500;
 var MAX_TEXT_LENGTH = 5000;
+var MAX_CATEGORY_LENGTH = 40;
 var MAX_URL_LENGTH = 2000;
 var MAX_AI_MESSAGE_CELL = 45000;
 var IMAGE_EXTENSIONS = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
@@ -376,7 +377,10 @@ function saveItem_(item) {
       clean.bytes ? clean.bytes.length : '',
       'baru',
       clean.ruang,
-      clean.gambar
+      clean.gambar,
+      '',
+      '',
+      safeCell_(clean.kategori)
     ]);
 
     return { ok: true, id: clean.id, driveUrl: file ? file.getUrl() : '' };
@@ -872,6 +876,7 @@ function cleanField_(table, header, value) {
     if (allowed.indexOf(choice) === -1) throw new Error('Nilai ' + header + ' tidak sah.');
     return choice;
   }
+  if (table === 'Item' && header === 'kategori') return cleanCategory_(value);
   if (header === 'jumlah' || header === 'cukai') {
     if (value === '' || value == null) return '';
     var amount = Number(value);
@@ -922,6 +927,10 @@ function cleanField_(table, header, value) {
   return cleanText_(value, MAX_TEXT_LENGTH);
 }
 
+function cleanCategory_(value) {
+  return cleanText_(value, 200).replace(/\s+/g, ' ').trim().slice(0, MAX_CATEGORY_LENGTH);
+}
+
 function cleanTimestamp_(value) {
   var text = value == null ? '' : String(value);
   if (!/^\d{4}-\d{2}-\d{2}T/.test(text) || isNaN(new Date(text).getTime())) return '';
@@ -951,7 +960,8 @@ function validateItem_(item) {
     text: cleanText_(item.text, MAX_TEXT_LENGTH),
     url: cleanUrl_(item.url),
     ruang: cleanField_('Item', 'ruang', item.ruang),
-    gambar: cleanIdList_(item.gambar)
+    gambar: cleanIdList_(item.gambar),
+    kategori: cleanCategory_(item.kategori)
   };
 
   if (item.type === 'image') {

@@ -65,7 +65,7 @@ test('naik taraf dari sheet lama menambah lajur tanpa mengusik data', () => {
   item.rows = [item.rows[0].slice(0, 11), ['lama-0001', '2026-11-04T00:00:00Z', 'note', '', '', 'nota lama', '', '', '', '', 'baru']];
   delete harness.state.sheets.Tugasan;
   const tables = list();
-  assert.equal(item.rows[0].length, 15);
+  assert.equal(item.rows[0].length, 16);
   assert.equal(tables.Item[0].nota, 'nota lama');
   assert.equal(tables.Item[0].ruang, '');
   assert.deepEqual(tables.Tugasan, []);
@@ -298,7 +298,7 @@ test('arkib dan sampah disimpan tanpa membuang data atau fail', () => {
 
 test('listAll melaporkan versi backend', () => {
   const { call } = ready();
-  assert.equal(call({ action: 'listAll' }).version, 6);
+  assert.equal(call({ action: 'listAll' }).version, 7);
 });
 
 const GOOD_KEY = 'sk-ant-api03-' + 'a'.repeat(40);
@@ -748,4 +748,14 @@ test('nama pengguna disimpan dalam Tetapan', () => {
   const { call, list } = ready();
   assert.equal(call({ action: 'saveRecord', table: 'Tetapan', record: { id: 'nama-pengguna', nilai: 'Ali' } }).ok, true);
   assert.equal(list().Tetapan.find((row) => row.id === 'nama-pengguna').nilai, 'Ali');
+});
+
+test('kategori disimpan, dikemaskan dan boleh diubah', () => {
+  const { call, list } = ready();
+  assert.equal(call({ action: 'saveItem', item: { id: ID, type: 'note', text: 'x', kategori: '  Idea   bisnes ' } }).ok, true);
+  assert.equal(list().Item[0].kategori, 'Idea bisnes');
+  assert.equal(call({ action: 'saveRecord', table: 'Item', record: { id: ID, kategori: 'Movie' } }).ok, true);
+  assert.equal(list().Item[0].kategori, 'Movie');
+  call({ action: 'saveRecord', table: 'Item', record: { id: ID, kategori: 'x'.repeat(90) } });
+  assert.equal(list().Item[0].kategori.length, 40);
 });

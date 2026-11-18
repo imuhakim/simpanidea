@@ -6,7 +6,7 @@ import { buildAiContext } from '../docs/lib/ai-context.js';
 import { createVault, decrypt, encrypt, unlockVault } from '../docs/lib/vault.js';
 import { autoMatches, dayGap, linkedReceipt, matchCandidates, paymentForReceipt, sameAmount } from '../docs/lib/payments.js';
 import { cleanName, greetingFor } from '../docs/lib/profile.js';
-import { checklistSummary, checklistText, parseChecklist, readableNote, rowsFromText, textFromRows } from '../docs/lib/checklist.js';
+import { checklistSummary, checklistText, mergeRows, parseChecklist, readableNote, rowsFromAiText, rowsFromText, textFromRows } from '../docs/lib/checklist.js';
 import { createPinRecord, isValidPin, isWeakPin, lockoutSeconds, verifyPin } from '../docs/lib/pin.js';
 
 test('YouTube dikenali dari semua bentuk link biasa', () => {
@@ -259,4 +259,23 @@ test('nota boleh ditukar kepada checklist dan sebaliknya tanpa hilang teks', () 
   assert.equal(textFromRows([{ text: 'Satu', done: true }, { text: '', done: false }, { text: 'Dua', done: false }]), 'Satu\nDua');
   assert.equal(readableNote('[x] Satu\n[ ] Dua'), '☑ Satu\n☐ Dua');
   assert.equal(readableNote('Biasa'), 'Biasa');
+});
+
+test('gabung checklist membuang perkara berulang dan kekal belum siap kalau ada yang belum', () => {
+  const merged = mergeRows([
+    [{ text: 'Beli susu', done: true }, { text: 'Bayar bil', done: true }],
+    [{ text: ' beli  SUSU ', done: false }, { text: 'Basuh kereta', done: false }],
+    null
+  ]);
+  assert.deepEqual(merged, [
+    { text: 'Beli susu', done: false },
+    { text: 'Bayar bil', done: true },
+    { text: 'Basuh kereta', done: false }
+  ]);
+});
+
+test('checklist dibaca daripada jawapan AI walaupun ada ayat lain', () => {
+  const rows = rowsFromAiText('Ini dia:\n- [ ] Tonton Dune\n[x] Daftar SSM\n\nperkara lain tanpa tanda');
+  assert.deepEqual(rows, [{ text: 'Tonton Dune', done: false }, { text: 'Daftar SSM', done: true }]);
+  assert.deepEqual(rowsFromAiText('Maaf, saya tidak faham.'), []);
 });
